@@ -7,6 +7,9 @@ services:
             - 9900:8899
         volumes:
             - ./date:/root/.any-reader
-        image: aooiu/any-reader
+        image: any-reader:local
+        build:
+            context: .
+            dockerfile: Dockerfile
         environment:
           - TZ=Asia/Shanghai
