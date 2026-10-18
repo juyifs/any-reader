@@ -59,6 +59,9 @@
           </TreeItem>
         </template>
       </template>
+      <div v-if="list.some((item) => item.hasMore)" class="py-5 text-center">
+        <vscode-button :disabled="loading" @click="loadMore">加载更多</vscode-button>
+      </div>
     </div>
   </div>
 </template>
@@ -74,7 +77,7 @@ const rulesStore = useRulesStore();
 const expand = ref(false);
 const filterType = ref(1);
 
-const { contentType, searchText, onSearch, cancelSearch, loading, runCount, total, list, getChapter } = useSearch();
+const { contentType, searchText, onSearch, loadMore, cancelSearch, loading, runCount, total, list, getChapter } = useSearch();
 
 const displayList = computed<any[]>(() => {
   if (filterType.value === 1) {

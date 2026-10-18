@@ -19,7 +19,7 @@
     </div>
     <div class="flex-1 overflow-auto text-[--ar-color-text]">
       <!-- 规则列表 -->
-      <template v-for="item in list" :key="item.id">
+      <template v-for="item in list" :key="item.rule.id">
         <div v-if="item.list.length" class="pt-20">
           <div class="mb-6">{{ item.rule.name }}</div>
           <div class="overflow-hidden">
@@ -72,6 +72,9 @@
           </div>
         </div>
       </template>
+      <div v-if="list.some((item) => item.hasMore)" class="py-10 text-center">
+        <a-button :loading="loading" :disabled="loading" @click="loadMore">加载更多</a-button>
+      </div>
     </div>
   </div>
 </template>
@@ -85,7 +88,7 @@ import { useSearch } from '@/pages/common/search';
 const favoritesStore = useFavoritesStore();
 const rulesStore = useRulesStore();
 
-const { contentType, searchText, onSearch, cancelSearch, loading, runCount, total, list, getChapter } = useSearch();
+const { contentType, searchText, onSearch, loadMore, cancelSearch, loading, runCount, total, list, getChapter } = useSearch();
 </script>
 
 <style scoped lang="scss">

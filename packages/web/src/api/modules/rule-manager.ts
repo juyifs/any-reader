@@ -25,7 +25,7 @@ export function discoverMapByRule(data: any) {
 }
 
 // 发现页分类下内容
-export function discover(data: any) {
+export function discover(data: { ruleId: string; data: any; page?: number }) {
   return request({
     method: 'post',
     url: 'rule-manager/discover',
@@ -42,7 +42,7 @@ export function discoverByRule(data: any) {
 }
 
 // 根据规则ID搜索内容
-export function searchByRuleId(data: { ruleId: string; keyword: string }) {
+export function searchByRuleId(data: { ruleId: string; keyword: string; page?: number }) {
   return request({
     method: 'post',
     url: 'rule-manager/search-by-rule-id',

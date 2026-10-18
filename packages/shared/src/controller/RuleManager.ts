@@ -26,13 +26,13 @@ export class RuleManager extends BaseController {
   @Cacheable({
     ttl: 1000 * 60 * 60,
     cacheKey({ args }) {
-      const { ruleId = '', data } = args[0];
-      return `discover@${ruleId}@${md5(data.value)}`;
+      const { ruleId = '', data, page = 1 } = args[0];
+      return `discover@${ruleId}@${md5(data.value)}@${page}`;
     }
   })
-  async discover({ ruleId, data }: { ruleId: string; data: any }) {
+  async discover({ ruleId, data, page = 1 }: { ruleId: string; data: any; page?: number }) {
     const rule = await this.getRule(ruleId);
-    return await this.discoverByRule({ rule, data });
+    return await this.discoverByRule({ rule, data, page });
   }
 
   @Post('content-decoder')
@@ -50,9 +50,9 @@ export class RuleManager extends BaseController {
   //     return `searchByRuleId@${ruleId || '__local__'}@v2_${md5(keyword)}`
   //   },
   // })
-  async searchByRuleId({ ruleId, keyword }: { ruleId: string; keyword: string }) {
+  async searchByRuleId({ ruleId, keyword, page = 1 }: { ruleId: string; keyword: string; page?: number }) {
     const rule = await this.getRule(ruleId);
-    return await this.searchByRule({ rule, keyword });
+    return await this.searchByRule({ rule, keyword, page });
   }
 
   @Post('chapter')
@@ -106,9 +106,9 @@ export class RuleManager extends BaseController {
   }
 
   @Post('search-by-rule')
-  async searchByRule({ rule, keyword }: { rule: Rule; keyword: string }) {
+  async searchByRule({ rule, keyword, page = 1 }: { rule: Rule; keyword: string; page?: number }) {
     const analyzer = this.createRuleManager(rule);
-    return await analyzer.search(keyword);
+    return await analyzer.search(keyword, page);
   }
 
   @Post('chapter-by-rule')
@@ -143,9 +143,14 @@ export class RuleManager extends BaseController {
   }
 
   @Post('discover-by-rule')
-  async discoverByRule({ rule, data }: { rule: Rule; data: any }) {
+  async discoverByRule({ rule, data, page = 1 }: { rule: Rule; data: any; page?: number }) {
     const ruleManager = this.createRuleManager(rule);
-    return await ruleManager.discover(data.value);
+    let result = [];
+    for (let currentPage = 1; currentPage <= page; currentPage++) {
+      result = await ruleManager.discover(data.value, currentPage);
+      if (!result.length) break;
+    }
+    return result;
   }
 
   @Post('analyzer-text')

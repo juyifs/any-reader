@@ -79,6 +79,9 @@
           </div>
           <div v-for="i in 10" :key="i" class="invisible w-102" />
         </div>
+        <div v-if="hasMore" class="py-10 text-center">
+          <a-button :loading="loadingMore" :disabled="loadingMore" @click="loadMore">加载更多</a-button>
+        </div>
       </div>
     </div>
 
@@ -124,10 +127,16 @@ const rulesStore = useRulesStore();
 const list = ref<any[]>([]);
 const contentType = ref(ContentType.NOVEL);
 const ruleId = ref('');
-const rule = ref({});
 const categoryList = ref<any[]>([]);
 const loading = ref(false);
+const loadingMore = ref(false);
+const page = ref(1);
+const hasMore = ref(false);
 const searchText = ref('');
+const currentCategory = ref<any>();
+let categoryRequest = 0;
+
+const PAGE_PATTERN = /(\$page)|((^|[^a-zA-Z'"_/-])page([^a-zA-Z0-9'"]|$))/;
 
 const ruleListDisplay = computed(() => {
   const filterContentType = rulesStore.list.filter((e) => e.enableDiscover && e.contentType === contentType.value);
@@ -137,23 +146,61 @@ const ruleListDisplay = computed(() => {
 
 // 分类被修改
 async function changeCategory(row: any) {
+  const requestId = ++categoryRequest;
+  currentCategory.value = row;
   loading.value = true;
   list.value = [];
-  loading.value = true;
-  const res = await discover({
-    data: JSON.parse(JSON.stringify(row)),
-    ruleId: ruleId.value
-  });
-  list.value = res?.data || [];
-  loading.value = false;
+  page.value = 1;
+  loadingMore.value = false;
+  const selectedRule = rulesStore.list.find((item) => item.id === ruleId.value);
+  hasMore.value = Boolean(selectedRule?.discoverNextUrl || PAGE_PATTERN.test(row.value));
+  try {
+    const res = await discover({
+      data: JSON.parse(JSON.stringify(row)),
+      ruleId: ruleId.value,
+      page: page.value
+    });
+    if (requestId !== categoryRequest) return;
+    list.value = res?.data || [];
+    if (!list.value.length) hasMore.value = false;
+  } finally {
+    if (requestId === categoryRequest) loading.value = false;
+  }
+}
+
+async function loadMore() {
+  if (loading.value || loadingMore.value || !hasMore.value || !currentCategory.value) return;
+  const requestId = categoryRequest;
+  const nextPage = page.value + 1;
+  loadingMore.value = true;
+  try {
+    const res = await discover({
+      data: JSON.parse(JSON.stringify(currentCategory.value)),
+      ruleId: ruleId.value,
+      page: nextPage
+    });
+    if (requestId !== categoryRequest) return;
+    const rows = res?.data || [];
+    if (rows.length) {
+      list.value.push(...rows);
+      page.value = nextPage;
+    } else {
+      hasMore.value = false;
+    }
+  } finally {
+    if (requestId === categoryRequest) loadingMore.value = false;
+  }
 }
 
 // 规则被修改
 async function changeRule(id: string) {
+  categoryRequest++;
   ruleId.value = id;
   loading.value = true;
-  rule.value = categoryList.value.find((e) => e.id === id);
   list.value = [];
+  page.value = 1;
+  hasMore.value = false;
+  loadingMore.value = false;
   categoryList.value = [];
   const res = await discoverMap(ruleId.value);
   categoryList.value = res?.data || [];

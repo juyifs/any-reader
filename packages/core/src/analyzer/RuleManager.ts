@@ -66,7 +66,7 @@ export class RuleManager implements IParser {
       searchRule = url;
     }
 
-    if (searchRule === null) {
+    if (!searchRule) {
       return [];
     }
 
@@ -331,7 +331,8 @@ export class RuleManager implements IParser {
   // 获取分类下内容
   async discover(url: string, page = 1) {
     this.JSEngine.setEnvironment({
-      result: url
+      result: url,
+      page
     });
     const hasNextUrlRule = this.rule.discoverNextUrl !== undefined && this.rule.discoverNextUrl.length > 0;
     let discoverRule;
@@ -351,12 +352,12 @@ export class RuleManager implements IParser {
     let body = '';
 
     if (discoverRule !== 'null') {
-      const { body: res } = await this.request(parseRequest(await this.analyzerManager.parseJsUrl(discoverRule), '', '', this.rule));
+      const { body: res } = await this.request(parseRequest(await this.analyzerManager.parseJsUrl(discoverRule), '', '', this.rule, page));
       body = res;
     }
 
     this.JSEngine.setEnvironment({
-      page: 1,
+      page,
       lastResult: url,
       result: body,
       baseUrl: this.rule.host

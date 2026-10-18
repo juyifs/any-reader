@@ -4,6 +4,8 @@ import { ContentType } from '@any-reader/rule-utils';
 import { searchByRuleId } from '@/api';
 import { useRulesStore } from '@/stores/rules';
 
+const PAGE_PATTERN = /(\$page)|((^|[^a-zA-Z'"_/-])page([^a-zA-Z0-9'"]|$))/;
+
 export function useSearch() {
   const rulesStore = useRulesStore();
 
@@ -34,16 +36,18 @@ export function useSearch() {
     const tasks = rules.map((rule) =>
       runPromise(() => {
         return new Promise((c) => {
-          if (lastUuid !== uuid) return;
+          if (lastUuid !== uuid) return c(true);
           runCount.value++;
-          searchByRuleId({ ruleId: rule.id, keyword: searchText.value })
+          searchByRuleId({ ruleId: rule.id, keyword: searchText.value, page: 1 })
             .then((res) => {
-              if (res.code === 0) {
+              if (res.code === 0 && lastUuid === uuid) {
                 const rows = res.data;
                 if (!rows.length) return;
                 list.value.push({
                   rule: rule,
-                  list: rows
+                  list: rows,
+                  page: 1,
+                  hasMore: PAGE_PATTERN.test(rule.searchUrl)
                 });
               }
             })
@@ -53,6 +57,45 @@ export function useSearch() {
     );
     await Promise.all(tasks).catch(() => {});
     loading.value = false;
+  }
+
+  async function loadMore() {
+    const groups = list.value.filter((item) => item.hasMore);
+    if (loading.value || groups.length === 0) return;
+
+    const runPromise = pLimit(10);
+    const lastUuid = uuidV4();
+    uuid = lastUuid;
+    loading.value = true;
+    total.value = groups.length;
+    runCount.value = 0;
+
+    const tasks = groups.map((group) =>
+      runPromise(
+        () =>
+          new Promise((resolve) => {
+            if (lastUuid !== uuid) return resolve(true);
+            runCount.value++;
+            const page = group.page + 1;
+            searchByRuleId({ ruleId: group.rule.id, keyword: searchText.value, page })
+              .then((res) => {
+                if (lastUuid !== uuid || res.code !== 0) return;
+                const rows = res.data;
+                if (rows.length) {
+                  group.list.push(...rows);
+                  group.page = page;
+                } else {
+                  group.hasMore = false;
+                }
+              })
+              .catch((error) => console.error('搜索下一页失败', error))
+              .finally(() => resolve(true));
+          })
+      )
+    );
+
+    await Promise.all(tasks).catch(() => {});
+    if (lastUuid === uuid) loading.value = false;
   }
 
   function cancelSearch() {
@@ -90,6 +133,7 @@ export function useSearch() {
     cancelSearch,
     searchText,
     onSearch,
+    loadMore,
     loading,
     runCount,
     total,
