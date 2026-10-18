@@ -125,7 +125,7 @@ const favoritesStore = useFavoritesStore();
 const rulesStore = useRulesStore();
 
 const list = ref<any[]>([]);
-const contentType = ref(ContentType.NOVEL);
+const contentType = ref(typeof route.params.contentType === 'undefined' ? ContentType.NOVEL : Number(route.params.contentType));
 const ruleId = ref('');
 const categoryList = ref<any[]>([]);
 const loading = ref(false);
@@ -219,13 +219,6 @@ watch(
     immediate: true
   }
 );
-
-onMounted(() => {
-  activated = true;
-  if (typeof route.params.contentType !== 'undefined') {
-    contentType.value = +route.params.contentType;
-  }
-});
 
 onActivated(() => {
   activated = true;
