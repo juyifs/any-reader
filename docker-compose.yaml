@@ -1,0 +1,12 @@
+version: "3"
+services:
+    any-reader:
+        container_name: any-reader
+        restart: unless-stopped
+        ports:
+            - 9900:8899
+        volumes:
+            - ./date:/root/.any-reader
+        image: aooiu/any-reader
+        environment:
+          - TZ=Asia/Shanghai
