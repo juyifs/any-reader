@@ -15,6 +15,19 @@ export default function runTest(analyzerManager: AnalyzerManager) {
       expect(content).toEqual('iPhone');
     });
 
+    it('preserves unsafe JSON integers as strings', async () => {
+      const body = '{"vod_id":642522659254567177,"safe":42,"text":"642522659254567177"}';
+      const id = await analyzerManager.getString('$.vod_id', body);
+      const values = await analyzerManager.getElements('$.vod_id', body);
+      const safe = await analyzerManager.getElements('$.safe', body);
+      const text = await analyzerManager.getString('$.text', body);
+
+      expect(id).toEqual('642522659254567177');
+      expect(values).toEqual(['642522659254567177']);
+      expect(safe).toEqual([42]);
+      expect(text).toEqual('642522659254567177');
+    });
+
     it('|| getString', async () => {
       const body = '{"a": "1"}';
       const content = await analyzerManager.getString('$.b||$.a', body);
