@@ -21,18 +21,19 @@ import zhCN from 'ant-design-vue/es/locale/zh_CN';
 import { IS_BROWSER } from '@/constants';
 import { THEME } from '@/constants/theme';
 import { useMessage } from '@/utils/postMessage';
+import { useSettingStore } from '@/stores/setting';
 import { useRulesStore } from '@/stores/rules';
 import { useFavoritesStore } from '@/stores/favorites';
 import { registerTokenToCSSVar } from '@/utils/theme';
 import { useMagicKeys } from '@/hooks/useMagicKeys';
 
 const { token: tToken } = theme.useToken();
-
-const token = ref(THEME[THEME.length - 1].theme);
+const settingStore = useSettingStore();
+const token = computed(() => settingStore.data.theme || THEME[THEME.length - 1].theme);
 const router = useRouter();
 
-provide('setTheme', (v: any) => {
-  token.value = v;
+provide('setTheme', (v: (typeof THEME)[number]['theme']) => {
+  settingStore.data.theme = v;
 });
 
 watchEffect(() => {

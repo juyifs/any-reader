@@ -180,3 +180,5 @@ export const THEME = [
     }
   }
 ];
+
+export type ThemeToken = (typeof THEME)[number]['theme'];

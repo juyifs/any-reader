@@ -1,5 +1,6 @@
 import { merge } from 'lodash-es';
 import { readConfig, updateConfig } from '@/api';
+import type { ThemeToken } from '@/constants/theme';
 
 export type ReadStyle = {
   // 字体大小
@@ -33,6 +34,7 @@ export type Setting = {
   readStyle: ReadStyle;
   keyboardShortcuts: KeyboardShortcuts;
   bookDir: string;
+  theme: ThemeToken | null;
 };
 
 export const useSettingStore = defineStore('setting', () => {
@@ -54,7 +56,8 @@ export const useSettingStore = defineStore('setting', () => {
       pageDown: '↓',
       tts: ''
     },
-    bookDir: ''
+    bookDir: '',
+    theme: null
   });
 
   // 同步
