@@ -15,13 +15,14 @@ import { useFavoritesStore } from '@/stores/favorites';
  * @param params - 路由参数
  * @returns 收藏相关的状态和方法
  */
-function useFavorites(params: Record<string, string>) {
+function useFavorites(getParams: () => Record<string, string>) {
   const favoritesStore = useFavoritesStore();
 
   /**
    * 判断当前内容是否已收藏
    */
   const isStarred = computed<boolean>(() => {
+    const params = getParams();
     const { filePath, ruleId } = params;
     if (!ruleId) return false;
     return favoritesStore.starred({ url: filePath, ruleId });
@@ -31,9 +32,10 @@ function useFavorites(params: Record<string, string>) {
    * 收藏当前内容
    */
   function star() {
+    const params = getParams();
     const { ruleId } = params;
     if (!ruleId) return false;
-    favoritesStore.star({ ...params, ruleId });
+    favoritesStore.star({ ...params, url: params.filePath, ruleId });
   }
 
   return {
@@ -205,6 +207,6 @@ export function useChapter() {
     historys,
     chaptersRef,
     isLastRead,
-    ...useFavorites(route.query as Record<string, string>)
+    ...useFavorites(() => route.query as Record<string, string>)
   };
 }

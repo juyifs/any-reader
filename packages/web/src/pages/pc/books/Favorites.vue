@@ -4,6 +4,7 @@
     :key="item.url"
     :cover="item.cover"
     :name="item.name"
+    :description="item.description"
     :file-path="item.url"
     :rule-id="item.ruleId"
     :author="item.author"
@@ -24,6 +25,10 @@ import { useFavoritesStore } from '@/stores/favorites';
 import Book from './Book.vue';
 
 const favoritesStore = useFavoritesStore();
+
+onMounted(() => {
+  favoritesStore.sync();
+});
 </script>
 
 <style lang="scss">

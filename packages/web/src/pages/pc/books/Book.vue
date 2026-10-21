@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ name: string; cover?: string; author?: string; filePath?: string; ruleId?: string }>();
+const props = defineProps<{ name: string; cover?: string; author?: string; description?: string; filePath?: string; ruleId?: string }>();
 
 const router = useRouter();
 
@@ -20,7 +20,10 @@ function showChapter() {
     query: {
       filePath: props.filePath,
       ruleId: props.ruleId,
-      name: props.name
+      name: props.name,
+      cover: props.cover,
+      author: props.author,
+      description: props.description
     }
   });
 }

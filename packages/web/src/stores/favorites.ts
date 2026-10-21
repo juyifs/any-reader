@@ -34,12 +34,12 @@ export const useFavoritesStore = defineStore('favorites', () => {
     } else {
       await _star(row);
     }
-    sync();
+    await sync();
   }
 
   async function unstar(row: any) {
     await _unstar(row);
-    sync();
+    await sync();
   }
 
   return {

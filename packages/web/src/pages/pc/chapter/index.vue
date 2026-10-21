@@ -19,7 +19,7 @@
     </div>
 
     <div class="flex shrink-0 gap-10">
-      <a-button type="primary" class="h-40 flex-1" :disabled="loading || !list.length" @click="list[0] && showContent(list[0])">
+      <a-button type="primary" class="h-40 flex-1" :disabled="loading || !startChapter" @click="startChapter && showContent(startChapter)">
         {{ isMedia ? '开始播放' : '开始阅读' }}
       </a-button>
       <a-button class="h-40 flex-1" :disabled="!ruleId" @click="star">
@@ -84,7 +84,7 @@ import { useRulesStore } from '@/stores/rules';
 
 const route = useRoute();
 const rulesStore = useRulesStore();
-const { chaptersRef, showContent, loading, list, description, findHistory, isLastRead, ruleId, isStarred, star } = useChapter();
+const { chaptersRef, showContent, loading, list, description, historys, findHistory, isLastRead, ruleId, isStarred, star } = useChapter();
 
 const book = computed(() => ({
   name: String(route.query.name || ''),
@@ -92,6 +92,14 @@ const book = computed(() => ({
   author: String(route.query.author || ''),
   description: String(route.query.description || '')
 }));
+const startChapter = computed(() => {
+  const lastReadPath = historys.value[0]?.chapterPath;
+  if (lastReadPath) {
+    const lastReadChapter = list.value.find((item) => (item.chapterPath || item.url) === lastReadPath);
+    if (lastReadChapter) return lastReadChapter;
+  }
+  return list.value[0];
+});
 const isMedia = computed(() => {
   const contentType = rulesStore.list.find((rule) => rule.id === ruleId.value)?.contentType;
   return contentType === ContentType.VIDEO || contentType === ContentType.AUDIO;

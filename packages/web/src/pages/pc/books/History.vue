@@ -10,6 +10,7 @@
     :cover="item.cover"
     :name="item.name"
     :author="item.author"
+    :description="item.description"
     class="mb-10 mr-10"
     :file-path="item.url"
     :rule-id="item.ruleId"
