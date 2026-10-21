@@ -61,6 +61,7 @@ export function useChapter() {
   const ruleId = computed(() => route.query.ruleId);
 
   const loading = ref(false);
+  const openingOriginalVideo = ref(false);
   /** 章节列表数据 */
   const list = ref<any[]>([]);
   /** 从章节页提取的简介 */
@@ -197,9 +198,49 @@ export function useChapter() {
     });
   }
 
+  async function openOriginalVideo(item: any) {
+    const { filePath, ruleId } = route.query;
+    const videoWindow = window.open('about:blank', '_blank');
+    if (!videoWindow) {
+      message.warning('浏览器阻止了新窗口，请允许弹出窗口后重试');
+      return;
+    }
+
+    openingOriginalVideo.value = true;
+    try {
+      const res = await getContent({
+        filePath,
+        ruleId,
+        chapterPath: item.url || item.chapterPath
+      });
+      const content = res?.data?.content;
+      const url = typeof content === 'string' ? content : content?.[0];
+      if (res?.code !== 0 || !url) {
+        videoWindow.close();
+        message.warning('获取视频地址失败！');
+        return;
+      }
+
+      const videoUrl = new URL(url, window.location.href);
+      if (!['http:', 'https:'].includes(videoUrl.protocol)) {
+        videoWindow.close();
+        message.warning('视频地址格式不支持在浏览器中打开');
+        return;
+      }
+      videoWindow.location.href = videoUrl.href;
+    } catch (error) {
+      videoWindow.close();
+      message.error(error instanceof Error ? error.message : '获取视频地址失败！');
+    } finally {
+      openingOriginalVideo.value = false;
+    }
+  }
+
   return {
     ruleId,
     showContent,
+    openOriginalVideo,
+    openingOriginalVideo,
     findHistory,
     list,
     description,

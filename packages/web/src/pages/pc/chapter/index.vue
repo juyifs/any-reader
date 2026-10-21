@@ -53,18 +53,28 @@
           <div
             v-for="item in filteredList"
             :key="item.url"
-            class="h-32 w-full cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap rounded-2 px-8 lh-32 hover:bg-[--ar-color-primary-bg] hover:text-[--ar-color-primary-text]"
+            class="min-h-32 w-full flex cursor-pointer items-center gap-8 overflow-hidden rounded-2 px-8 hover:bg-[--ar-color-primary-bg] hover:text-[--ar-color-primary-text]"
             :class="[
               isLastRead(item) ? 'text-[--ar-color-primary-text]' : 'text-[--ar-color-text]',
               {
                 'op-70': !!findHistory(item)
               }
             ]"
-            :title="item.name"
             :data-url="item.chapterPath"
-            @click="showContent(item)"
           >
-            {{ item.name }}
+            <div class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap lh-32" :title="item.name" @click="showContent(item)">
+              {{ item.name }}
+            </div>
+            <a-button
+              v-if="isVideo"
+              type="link"
+              size="small"
+              class="shrink-0 px-4"
+              :loading="openingOriginalVideo"
+              @click.stop="openOriginalVideo(item)"
+            >
+              浏览器打开
+            </a-button>
           </div>
         </template>
         <div v-else class="h-full flex items-center justify-center">
@@ -84,7 +94,21 @@ import { useRulesStore } from '@/stores/rules';
 
 const route = useRoute();
 const rulesStore = useRulesStore();
-const { chaptersRef, showContent, loading, list, description, historys, findHistory, isLastRead, ruleId, isStarred, star } = useChapter();
+const {
+  chaptersRef,
+  showContent,
+  openOriginalVideo,
+  openingOriginalVideo,
+  loading,
+  list,
+  description,
+  historys,
+  findHistory,
+  isLastRead,
+  ruleId,
+  isStarred,
+  star
+} = useChapter();
 
 const book = computed(() => ({
   name: String(route.query.name || ''),
@@ -104,6 +128,7 @@ const isMedia = computed(() => {
   const contentType = rulesStore.list.find((rule) => rule.id === ruleId.value)?.contentType;
   return contentType === ContentType.VIDEO || contentType === ContentType.AUDIO;
 });
+const isVideo = computed(() => rulesStore.list.find((rule) => rule.id === ruleId.value)?.contentType === ContentType.VIDEO);
 
 // 搜索
 const searchQuery = ref('');
