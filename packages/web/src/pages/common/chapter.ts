@@ -205,6 +205,8 @@ export function useChapter() {
       message.warning('浏览器阻止了新窗口，请允许弹出窗口后重试');
       return;
     }
+    videoWindow.document.write('<!doctype html><meta name="referrer" content="no-referrer">');
+    videoWindow.document.close();
 
     openingOriginalVideo.value = true;
     try {
@@ -227,7 +229,7 @@ export function useChapter() {
         message.warning('视频地址格式不支持在浏览器中打开');
         return;
       }
-      videoWindow.location.href = videoUrl.href;
+      videoWindow.location.replace(videoUrl.href);
     } catch (error) {
       videoWindow.close();
       message.error(error instanceof Error ? error.message : '获取视频地址失败！');

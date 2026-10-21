@@ -61,20 +61,12 @@
               }
             ]"
             :data-url="item.chapterPath"
+            @click="isVideo ? openOriginalVideo(item) : showContent(item)"
           >
-            <div class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap lh-32" :title="item.name" @click="showContent(item)">
+            <div class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap lh-32" :title="item.name">
               {{ item.name }}
             </div>
-            <a-button
-              v-if="isVideo"
-              type="link"
-              size="small"
-              class="shrink-0 px-4"
-              :loading="openingOriginalVideo"
-              @click.stop="openOriginalVideo(item)"
-            >
-              浏览器打开
-            </a-button>
+            <a-button v-if="isVideo" type="link" size="small" class="shrink-0 px-4" @click.stop="showContent(item)"> 内置播放器 </a-button>
           </div>
         </template>
         <div v-else class="h-full flex items-center justify-center">
@@ -94,21 +86,8 @@ import { useRulesStore } from '@/stores/rules';
 
 const route = useRoute();
 const rulesStore = useRulesStore();
-const {
-  chaptersRef,
-  showContent,
-  openOriginalVideo,
-  openingOriginalVideo,
-  loading,
-  list,
-  description,
-  historys,
-  findHistory,
-  isLastRead,
-  ruleId,
-  isStarred,
-  star
-} = useChapter();
+const { chaptersRef, showContent, openOriginalVideo, loading, list, description, historys, findHistory, isLastRead, ruleId, isStarred, star } =
+  useChapter();
 
 const book = computed(() => ({
   name: String(route.query.name || ''),
