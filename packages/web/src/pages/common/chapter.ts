@@ -10,6 +10,12 @@ import { openWindow } from '@/api/modules/electron';
 import { useRulesStore } from '@/stores/rules';
 import { useFavoritesStore } from '@/stores/favorites';
 
+function getFirstContentValue(content: unknown) {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content) && typeof content[0] === 'string') return content[0];
+  return '';
+}
+
 /**
  * 收藏相关功能Hook
  * @param params - 路由参数
@@ -152,7 +158,7 @@ export function useChapter() {
         chapterPath: item.url || item.chapterPath
       }).catch(() => {});
       loading.value = false;
-      const url = res?.data?.content || '';
+      const url = getFirstContentValue(res?.data?.content);
       if (res?.code === 0 && url) {
         openWindow({
           url:
@@ -176,7 +182,7 @@ export function useChapter() {
         ruleId,
         chapterPath: item.url || item.chapterPath
       }).catch(() => {});
-      const url = res?.data?.content || '';
+      const url = getFirstContentValue(res?.data?.content);
       if (res?.code === 0) {
         openWindow({
           url:
@@ -227,8 +233,7 @@ export function useChapter() {
         ruleId,
         chapterPath
       });
-      const content = res?.data?.content;
-      const url = typeof content === 'string' ? content : content?.[0];
+      const url = getFirstContentValue(res?.data?.content);
       if (res?.code !== 0 || !url) {
         message.warning('获取视频地址失败！');
         return;
