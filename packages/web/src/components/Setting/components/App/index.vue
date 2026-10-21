@@ -8,7 +8,7 @@
     </SettingRow>
 
     <SettingRow title="本地书籍目录">
-      <a-input v-model:value="settingStore.data.bookDir" class="!w-200px" />
+      <a-input v-model:value="settingStore.data.bookDir" class="!max-w-200px !w-full" />
     </SettingRow>
 
     <SettingRow title="缓存">

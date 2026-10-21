@@ -1,10 +1,12 @@
 <template>
-  <div class="h-300 w-full flex overflow-hidden bg-[--activityBar-background] text-[--ar-color-text-secondary]">
-    <div class="h-full w-120 rounded-8 bg-[--ar-chapter-bg] p-10 text-[--ar-color-text]">
-      <div v-for="(nav, idx) in navs" :key="nav.title" class="" @click="activeNavIdx = idx">
+  <div class="h-300 max-h-[70vh] w-full flex flex-col overflow-hidden bg-[--activityBar-background] text-[--ar-color-text-secondary] sm:flex-row">
+    <div
+      class="flex shrink-0 gap-4 overflow-x-auto rounded-8 bg-[--ar-chapter-bg] p-5 text-[--ar-color-text] sm:h-full sm:w-120 sm:flex-col sm:gap-0 sm:overflow-x-hidden sm:overflow-y-auto sm:p-10"
+    >
+      <div v-for="(nav, idx) in navs" :key="nav.title" class="shrink-0" @click="activeNavIdx = idx">
         <div
           :class="[
-            'h-32 lh-32 px-10 rounded-10 mb-5 cursor-pointer hover:text-[--ar-color-primary-text]',
+            'h-32 whitespace-nowrap rounded-10 px-10 lh-32 mb-5 cursor-pointer hover:text-[--ar-color-primary-text]',
             activeNavIdx === idx ? 'bg-[--ar-color-primary-bg] text-[--ar-color-primary-text]' : ''
           ]"
         >
@@ -12,7 +14,7 @@
         </div>
       </div>
     </div>
-    <div class="ml-10 flex-1 rounded-8 bg-[--ar-chapter-bg]">
+    <div class="mt-5 min-h-0 min-w-0 flex-1 overflow-auto rounded-8 bg-[--ar-chapter-bg] sm:ml-10 sm:mt-0">
       <component :is="navs[activeNavIdx].component" />
     </div>
   </div>
