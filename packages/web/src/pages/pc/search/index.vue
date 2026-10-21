@@ -7,6 +7,10 @@
           <a-select v-model:value="contentType">
             <a-select-option v-for="item in CONTENT_TYPES" :key="item.value" :value="item.value">{{ item.label }}</a-select-option>
           </a-select>
+          <a-select v-model:value="selectedRuleId" class="min-w-140" :disabled="loading">
+            <a-select-option value="">全部站点</a-select-option>
+            <a-select-option v-for="rule in availableRules" :key="rule.id" :value="rule.id">{{ rule.name }}</a-select-option>
+          </a-select>
           <a-input v-model:value="searchText" placeholder="输入关键词，回车键搜索" :disabled="loading" allow-clear @keyup.enter="onSearch()" />
         </a-input-group>
       </div>
@@ -22,54 +26,14 @@
       <template v-for="item in list" :key="item.rule.id">
         <div v-if="item.list.length" class="pt-20">
           <div class="mb-6">{{ item.rule.name }}</div>
-          <div class="overflow-hidden">
-            <div class="flex gap-5 overflow-auto pb-5">
-              <div
-                v-for="(row, idx) in item.list"
-                :key="idx"
-                class="node relative w-102 flex flex-shrink-0 flex-col cursor-pointer hover:op-70"
-                :title="row.name"
-                @click="getChapter(row, item.rule)"
-              >
-                <div class="mb-5 h-136 w-102 overflow-hidden rounded-5">
-                  <ARCover
-                    :src="row.cover"
-                    error-icon="icon-book"
-                    :preview="false"
-                    alt=""
-                    srcset=""
-                    class="cover !h-136px !w-102px"
-                    width="100%"
-                    height="100%"
-                    fit="cover"
-                  />
-                </div>
-                <div class="mb-2 overflow-hidden text-ellipsis whitespace-nowrap">{{ row.name }}</div>
-                <div class="overflow-hidden text-ellipsis whitespace-nowrap text-12 op-70" :title="row.author">{{ row.author }}</div>
-
-                <div
-                  class="star invisible absolute right-5 top-5 flex items-center justify-center rounded-10 bg-[#000000cc] px-2 py-2"
-                  @click.stop="
-                    favoritesStore.star({
-                      ...row,
-                      ruleId: item.rule.id
-                    })
-                  "
-                >
-                  <StarFilled
-                    v-if="
-                      favoritesStore.starred({
-                        ...row,
-                        ruleId: item.rule.id
-                      })
-                    "
-                    :size="14"
-                  />
-                  <StarOutlined v-else :size="14" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <BookResultRow
+            v-for="(row, idx) in item.list"
+            :key="idx"
+            :row="row"
+            :is-starred="favoritesStore.starred({ ...row, ruleId: item.rule.id })"
+            @select="getChapter(row, item.rule)"
+            @favorite="favoritesStore.star({ ...row, ruleId: item.rule.id })"
+          />
         </div>
       </template>
       <div v-if="list.some((item) => item.hasMore)" class="py-10 text-center">
@@ -88,24 +52,6 @@ import { useSearch } from '@/pages/common/search';
 const favoritesStore = useFavoritesStore();
 const rulesStore = useRulesStore();
 
-const { contentType, searchText, onSearch, loadMore, cancelSearch, loading, runCount, total, list, getChapter } = useSearch();
+const { contentType, selectedRuleId, availableRules, searchText, onSearch, loadMore, cancelSearch, loading, runCount, total, list, getChapter } =
+  useSearch();
 </script>
-
-<style scoped lang="scss">
-.node .cover {
-  transition: all ease 0.3s;
-}
-.node:hover {
-  .star {
-    visibility: visible;
-
-    &:hover {
-      background: rgba(0, 0, 0, 1);
-    }
-  }
-
-  .cover {
-    transform: scale(1.2);
-  }
-}
-</style>

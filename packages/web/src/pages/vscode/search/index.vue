@@ -18,11 +18,17 @@
 
         <template v-if="expand">
           <!-- 规则类型 -->
-          <vscode-dropdown class="w-full" :value="'' + contentType" @input="(event:any) => (contentType = +event.target.value)">
-            <vscode-option v-for="item in CONTENT_TYPES.filter((e) => e.value !== ContentType.GAME)" :key="item.value" :value="item.value">
-              {{ item.label }}
-            </vscode-option>
-          </vscode-dropdown>
+          <div class="flex gap-2">
+            <vscode-dropdown class="flex-1" :value="'' + contentType" @input="(event:any) => (contentType = +event.target.value)">
+              <vscode-option v-for="item in CONTENT_TYPES.filter((e) => e.value !== ContentType.GAME)" :key="item.value" :value="item.value">
+                {{ item.label }}
+              </vscode-option>
+            </vscode-dropdown>
+            <vscode-dropdown class="flex-1" :value="selectedRuleId" @input="(event:any) => (selectedRuleId = event.target.value)">
+              <vscode-option value="">全部站点</vscode-option>
+              <vscode-option v-for="rule in availableRules" :key="rule.id" :value="rule.id">{{ rule.name }}</vscode-option>
+            </vscode-dropdown>
+          </div>
           <!-- filter -->
           <vscode-dropdown class="mt-2 w-full" :value="'' + filterType" @input="(event:any) => (filterType = +event.target.value)">
             <vscode-option :value="1">默认</vscode-option>
@@ -77,7 +83,8 @@ const rulesStore = useRulesStore();
 const expand = ref(false);
 const filterType = ref(1);
 
-const { contentType, searchText, onSearch, loadMore, cancelSearch, loading, runCount, total, list, getChapter } = useSearch();
+const { contentType, selectedRuleId, availableRules, searchText, onSearch, loadMore, cancelSearch, loading, runCount, total, list, getChapter } =
+  useSearch();
 
 const displayList = computed<any[]>(() => {
   if (filterType.value === 1) {

@@ -15,7 +15,9 @@ export function useSearch() {
   let uuid: string = '';
   const searchText = ref('');
   const contentType = ref(ContentType.NOVEL);
+  const selectedRuleId = ref('');
   const contentTypes = computed(() => [contentType.value]);
+  const availableRules = computed(() => rulesStore.list.filter((rule) => contentTypes.value.includes(rule.contentType) && rule.enableSearch));
   const loading = ref(false);
   const total = ref(0);
   const runCount = ref(0);
@@ -30,7 +32,7 @@ export function useSearch() {
     total.value = 0;
     runCount.value = 0;
     loading.value = true;
-    const rules = rulesStore.list.filter((e) => contentTypes.value.includes(e.contentType) && e.enableSearch);
+    const rules = availableRules.value.filter((rule) => !selectedRuleId.value || rule.id === selectedRuleId.value);
     total.value = rules.length;
 
     const tasks = rules.map((rule) =>
@@ -56,7 +58,7 @@ export function useSearch() {
       })
     );
     await Promise.all(tasks).catch(() => {});
-    loading.value = false;
+    if (lastUuid === uuid) loading.value = false;
   }
 
   async function loadMore() {
@@ -103,6 +105,12 @@ export function useSearch() {
     loading.value = false;
   }
 
+  watch(contentType, () => {
+    selectedRuleId.value = '';
+    cancelSearch();
+    list.value = [];
+  });
+
   function init() {
     const { keyword, _uuid } = route.query;
     if (searchText.value === keyword && uuid === _uuid) return;
@@ -130,6 +138,8 @@ export function useSearch() {
   return {
     getChapter,
     contentType,
+    selectedRuleId,
+    availableRules,
     cancelSearch,
     searchText,
     onSearch,

@@ -32,52 +32,25 @@
         <a-spin />
       </div>
       <div v-else-if="list.length" class="mt-10 flex-1 overflow-auto">
-        <div class="flex flex-wrap justify-center gap-6 overflow-auto">
-          <div
-            v-for="(row, idx) in list"
-            :key="idx"
-            class="node relative w-102 flex flex-shrink-0 flex-col cursor-pointer hover:op-70"
-            :title="row.name"
-            @click="
-              router.push({
-                path: '/chapter',
-                query: {
-                  ...row,
-                  ruleId,
-                  name: row.name,
-                  filePath: row.url
-                }
-              })
-            "
-          >
-            <div class="mb-5 h-136 w-102 overflow-hidden rounded-5">
-              <ARCover :src="row.cover" :preview="false" alt="" srcset="" class="!h-136px !w-102px" width="100%" height="100%" fit="cover" />
-            </div>
-            <div class="mb-2 overflow-hidden text-ellipsis whitespace-nowrap">{{ row.name }}</div>
-            <div class="overflow-hidden text-ellipsis whitespace-nowrap text-12 op-70" :title="row.author">{{ row.author }}</div>
-
-            <div
-              class="star invisible absolute right-5 top-5 flex items-center justify-center rounded-10 bg-[#000000cc] px-2 py-2"
-              @click.stop="
-                favoritesStore.star({
-                  ...row,
-                  ruleId
+        <div class="overflow-auto">
+          <div v-for="(row, idx) in list" :key="idx" class="group">
+            <BookResultRow
+              :row="row"
+              :is-starred="favoritesStore.starred({ ...row, ruleId })"
+              @select="
+                router.push({
+                  path: '/chapter',
+                  query: {
+                    ...row,
+                    ruleId,
+                    name: row.name,
+                    filePath: row.url
+                  }
                 })
               "
-            >
-              <StarFilled
-                v-if="
-                  favoritesStore.starred({
-                    ...row,
-                    ruleId
-                  })
-                "
-                :size="14"
-              />
-              <StarOutlined v-else :size="14" />
-            </div>
+              @favorite="favoritesStore.star({ ...row, ruleId })"
+            />
           </div>
-          <div v-for="i in 10" :key="i" class="invisible w-102" />
         </div>
         <div v-if="hasMore" class="py-10 text-center">
           <a-button :loading="loadingMore" :disabled="loadingMore" @click="loadMore">加载更多</a-button>
