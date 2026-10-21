@@ -48,6 +48,7 @@ import { CONTENT_TYPES } from '@/constants';
 import { useRulesStore } from '@/stores/rules';
 import { useFavoritesStore } from '@/stores/favorites';
 import { useSearch } from '@/pages/common/search';
+import BookResultRow from '@/components/BookResultRow.vue';
 
 const favoritesStore = useFavoritesStore();
 const rulesStore = useRulesStore();

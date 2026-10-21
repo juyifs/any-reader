@@ -91,6 +91,7 @@ import { updateRule } from '@/api/modules/resource-rule';
 import { useFavoritesStore } from '@/stores/favorites';
 import { useRulesStore } from '@/stores/rules';
 import RuleInfo from '@/pages/pc/rule-info/index.vue';
+import BookResultRow from '@/components/BookResultRow.vue';
 
 const route = useRoute();
 const router = useRouter();
