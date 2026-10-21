@@ -61,6 +61,8 @@ export function useChapter() {
   const loading = ref(false);
   /** 章节列表数据 */
   const list = ref<any[]>([]);
+  /** 从章节页提取的简介 */
+  const description = ref('');
   /** 阅读历史数据 */
   const historys = ref<any[]>([]);
 
@@ -85,6 +87,7 @@ export function useChapter() {
    */
   async function init() {
     list.value = [];
+    description.value = '';
     const { filePath, ruleId } = route.query as Record<string, string>;
     if (!filePath && !ruleId) return;
     loading.value = true;
@@ -92,6 +95,7 @@ export function useChapter() {
     loading.value = false;
     if (res?.code === 0) {
       list.value = res?.data || [];
+      description.value = list.value.find((item) => item.description)?.description || '';
     }
     await chapterHistory();
   }
@@ -196,6 +200,7 @@ export function useChapter() {
     showContent,
     findHistory,
     list,
+    description,
     loading,
     historys,
     chaptersRef,

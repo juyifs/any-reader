@@ -132,6 +132,13 @@ export const FORM_ITEMS: FormItem[] = [
     debug: true
   },
   {
+    prop: 'chapterDescription',
+    label: '简介',
+    show: (item: Rule) => [NOVEL, VIDEO, MANGA].includes(item.contentType),
+    formStep: 3,
+    debug: true
+  },
+  {
     prop: 'chapterResult',
     label: '结果',
     show: (item: Rule) => [NOVEL, VIDEO, MANGA].includes(item.contentType),

@@ -184,6 +184,13 @@ export class ResourceRule {
   chapterTime!: string;
 
   @Column({
+    name: 'chapter_description',
+    type: 'text',
+    default: ''
+  })
+  chapterDescription!: string;
+
+  @Column({
     name: 'discover_author',
     type: 'text',
     default: ''

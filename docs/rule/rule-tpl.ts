@@ -41,6 +41,7 @@ export interface Rule {
   chapterName: string; // 标题 // [!code highlight]
   chapterCover: string; // 封面
   chapterTime: string; // 时间
+  chapterDescription: string; // 简介
   chapterNextUrl: string; // 下一页地址
   chapterResult: string; // 结果 // [!code highlight]
 

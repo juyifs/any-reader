@@ -12,6 +12,7 @@ export interface ChapterItem {
   name: string;
   cover: string;
   time: string;
+  description?: string;
 }
 
 // 分类列表

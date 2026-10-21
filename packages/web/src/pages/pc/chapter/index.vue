@@ -31,8 +31,11 @@
       </a-button>
     </div>
 
-    <div v-if="book.description" class="max-h-120 shrink-0 overflow-auto whitespace-pre-wrap rounded-5 bg-[--ar-chapter-bg] p-10 text-14 lh-22">
-      {{ book.description }}
+    <div
+      v-if="description || book.description"
+      class="max-h-120 shrink-0 overflow-auto whitespace-pre-wrap rounded-5 bg-[--ar-chapter-bg] p-10 text-14 lh-22"
+    >
+      {{ description || book.description }}
     </div>
 
     <div class="min-h-0 flex flex-1 flex-col">
@@ -81,7 +84,7 @@ import { useRulesStore } from '@/stores/rules';
 
 const route = useRoute();
 const rulesStore = useRulesStore();
-const { chaptersRef, showContent, loading, list, findHistory, isLastRead, ruleId, isStarred, star } = useChapter();
+const { chaptersRef, showContent, loading, list, description, findHistory, isLastRead, ruleId, isStarred, star } = useChapter();
 
 const book = computed(() => ({
   name: String(route.query.name || ''),

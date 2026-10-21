@@ -126,7 +126,8 @@ export class RuleManager implements IParser {
           url: result,
           name: this.rule.chapterUrl,
           cover: '',
-          time: ''
+          time: '',
+          description: ''
         }
       ];
     }
@@ -149,6 +150,7 @@ export class RuleManager implements IParser {
       lastResult: result,
       result: body
     });
+    const description = await this.analyzerManager.getString(this.rule.chapterDescription, body);
 
     let list = [];
     if (this.rule.enableMultiRoads) {
@@ -167,7 +169,8 @@ export class RuleManager implements IParser {
         cover: await this.analyzerManager.getString(this.rule.chapterCover, row),
         name: (await this.analyzerManager.getString(this.rule.chapterName, row)).trim(),
         time: await this.analyzerManager.getString(this.rule.chapterTime, row),
-        url: await this.analyzerManager.getUrl(this.rule.chapterResult, this.rule.host, row)
+        url: await this.analyzerManager.getUrl(this.rule.chapterResult, this.rule.host, row),
+        description
       });
     }
     return chapterItems;

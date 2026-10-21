@@ -85,6 +85,8 @@ export interface Rule {
   chapterCover: string;
   /** 章节列表 - 时间选择器 */
   chapterTime: string;
+  /** 章节列表 - 简介选择器 */
+  chapterDescription: string;
   /** 章节列表 - 结果处理脚本 */
   chapterResult: string;
   /** 章节列表 - 内容选择器 */
@@ -206,6 +208,7 @@ export function createRule(rule: Partial<Rule>): Rule {
       chapterNextUrl: '',
       chapterList: '',
       chapterName: '',
+      chapterDescription: '',
       chapterResult: '',
       contentUrl: '',
       contentNextUrl: '',

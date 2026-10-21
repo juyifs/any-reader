@@ -48,6 +48,8 @@ outline: deep
 
 > 格式 `eso://:xxxxx` 是压缩后的规则, 软件也会自动识别, 也可以使用 [在线规则编解码工具](/play/comparess) 还原成json
 
+章节列表规则可通过 `chapterDescription` 从目录页提取书籍简介。它使用取内容规则语法，输入内容是 `chapterUrl` 请求返回的页面；未配置时页面仍使用搜索或发现结果中的简介。
+
 ## 规则字段类型
 
 ### URL地址规则

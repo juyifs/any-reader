@@ -60,7 +60,7 @@ export class RuleManager extends BaseController {
     ttl: 1000 * 60 * 60,
     cacheKey({ args }) {
       const { ruleId = '', filePath = '' } = args[0];
-      return `chapter@${ruleId || '__local__'}@v2_${md5(filePath)}`;
+      return `chapter@${ruleId || '__local__'}@v3_${md5(filePath)}`;
     }
   })
   async getChapter({ ruleId, filePath }: { ruleId?: string; filePath: string }) {

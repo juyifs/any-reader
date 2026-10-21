@@ -37,6 +37,28 @@ describe('RuleManager pagination', () => {
     expect(result[0].name).toBe('Second page book');
   });
 
+  it('extracts a description from the chapter page', async () => {
+    fetchMock.mockResolvedValue({
+      params: { url: 'http://example.test/book/1' },
+      body: '<div class="intro">Book description</div><div class="chapter"><a href="/chapter/1">Chapter 1</a></div>'
+    });
+    const rule = createRule({
+      host: 'http://example.test',
+      chapterUrl: '/book/1',
+      chapterList: '.chapter',
+      chapterName: 'a@text',
+      chapterResult: 'a@href',
+      chapterDescription: '.intro@text'
+    });
+    const manager = new RuleManager(rule, createAnalyzerManager());
+
+    const result = await manager.getChapter('/book/1');
+
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('Chapter 1');
+    expect(result[0].description).toBe('Book description');
+  });
+
   it('does not request later search pages when the rule has no pagination URL', async () => {
     const rule = createRule({
       host: 'http://example.test',
