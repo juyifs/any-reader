@@ -116,7 +116,7 @@
 
 <script setup lang="tsx">
 import { App } from 'ant-design-vue';
-import { useBus, EVENT_CHAPTERS_BOX, EVENT_SEARCH_BOX } from '@/utils/bus';
+import { useBus, EVENT_CHAPTERS_BOX, EVENT_SEARCH_BOX, EVENT_SETTING_BOX } from '@/utils/bus';
 import { useSettingStore } from '@/stores/setting';
 import { useReadStore } from '@/stores/read';
 import Setting from '@/components/Setting/index.vue';
@@ -133,6 +133,7 @@ const settingStore = useSettingStore();
 const readStore = useReadStore();
 const openChaptersBox = useBus(EVENT_CHAPTERS_BOX);
 const searchBox = useBus(EVENT_SEARCH_BOX);
+const settingBox = useBus(EVENT_SETTING_BOX);
 
 const navs = [
   { icon: 'codicon-home', path: '/books', title: '首页' },
@@ -158,6 +159,8 @@ function openSetting() {
     content: <Setting class="pt-10" />
   });
 }
+
+settingBox.on(openSetting);
 
 function navTo(path: string) {
   navsShow.value = false;

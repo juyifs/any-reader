@@ -39,6 +39,7 @@ export type Sidebar = 'left' | 'right' | 'hidden' | '';
 export type Setting = {
   readStyle: ReadStyle;
   keyboardShortcuts: KeyboardShortcuts;
+  autoNextChapter: boolean;
   sidebar: Sidebar;
   bookDir: string;
   theme: ThemeToken | null;
@@ -63,6 +64,7 @@ export const useSettingStore = defineStore('setting', () => {
       pageDown: '↓',
       tts: ''
     },
+    autoNextChapter: true,
     sidebar: 'left',
     bookDir: '',
     theme: null

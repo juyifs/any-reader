@@ -33,6 +33,7 @@ export type KeyboardShortcuts = {
 export type Setting = {
   readStyle: ReadStyle;
   keyboardShortcuts: KeyboardShortcuts;
+  autoNextChapter: boolean;
   bookDir: string;
   theme: ThemeToken | null;
 };
@@ -56,6 +57,7 @@ export const useSettingStore = defineStore('setting', () => {
       pageDown: '↓',
       tts: ''
     },
+    autoNextChapter: true,
     bookDir: '',
     theme: null
   });

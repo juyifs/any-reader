@@ -2,7 +2,7 @@
   <div class="h-full w-full flex flex-col overflow-hidden">
     <div
       id="text-container"
-      class="flex flex-1 flex-col overflow-hidden whitespace-pre-wrap break-words p-10 text-[#b3b3b3] lh-1.5em"
+      class="relative flex flex-1 flex-col overflow-hidden whitespace-pre-wrap break-words p-10 text-[#b3b3b3] lh-1.5em"
       :style="{
         fontSize: settingStore.data.readStyle.fontSize + 'px',
         letterSpacing: settingStore.data.readStyle.letterSpacing + 'px'
@@ -11,7 +11,13 @@
       <!-- 加载 -->
       <a-spin v-if="loading" :spinning="loading" class="h-full w-full items-center justify-center !flex" />
       <!-- 阅读区域 -->
-      <div ref="contentRef" v-focus tabindex="0" class="relative h-full flex flex-1 flex-col overflow-y-auto indent-2em outline-none sm:px-60">
+      <div
+        ref="contentRef"
+        v-focus
+        tabindex="0"
+        class="relative h-full flex flex-1 flex-col overflow-y-auto indent-2em outline-none sm:px-60"
+        @click="handleReaderClick"
+      >
         <!-- 漫画 -->
         <template v-if="contentType === ContentType.MANGA">
           <img v-for="(row, idx) in content" :key="idx" :src="row" />
@@ -22,7 +28,7 @@
         </template>
 
         <!-- 上下章节按钮 -->
-        <div class="flex justify-center">
+        <div v-if="!settingStore.data.autoNextChapter" class="flex justify-center">
           <a-button-group>
             <a-button
               type="text"
@@ -48,8 +54,42 @@
               下一章
               <RightOutlined />
             </a-button>
+            <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" @click="settingBox.emit">
+              <SettingOutlined />
+              设置
+            </a-button>
           </a-button-group>
         </div>
+      </div>
+      <div
+        v-if="settingStore.data.autoNextChapter && readerControlsVisible"
+        class="absolute bottom-20 left-50% z-10 translate-x--50% rounded-8 bg-[--background-color] px-5 py-2 shadow-lg"
+        @click.stop="resetReaderControlsTimer"
+      >
+        <a-button-group>
+          <a-button
+            type="text"
+            :disabled="!lastChapter"
+            :style="{ color: settingStore.data.readStyle.textColor }"
+            :title="readStore.preTitle"
+            @click="onPrevChapter"
+          >
+            <LeftOutlined />
+            上一章
+          </a-button>
+          <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" @click="showChapters">目录</a-button>
+          <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" :title="readStore.title" @click="init(true)">重载</a-button>
+          <a-button
+            type="text"
+            :disabled="!nextChapter"
+            :style="{ color: settingStore.data.readStyle.textColor }"
+            :title="readStore.nextTitle"
+            @click="onNextChapter"
+          >
+            下一章
+            <RightOutlined />
+          </a-button>
+        </a-button-group>
       </div>
       <a-back-top class="hidden sm:block" :visibility-height="100" :target="topTarget" />
     </div>
@@ -94,26 +134,65 @@
 
 <script setup lang="ts">
 import { ContentType } from '@any-reader/rule-utils';
+import { SettingOutlined } from '@ant-design/icons-vue';
 import { onClickOutside } from '@vueuse/core';
 import { useChaptersStore } from '@/stores/chapters';
 import { useReadStore } from '@/stores/read';
-import { useBus, EVENT_CHAPTERS_BOX } from '@/utils/bus';
+import { useBus, EVENT_CHAPTERS_BOX, EVENT_SETTING_BOX } from '@/utils/bus';
 import { useContent, useTheme } from '@/pages/common/content';
 
 const chaptersStore = useChaptersStore();
 const readStore = useReadStore();
 
 const chaptersVisible = ref(false);
+const readerControlsVisible = ref(false);
 const contentRef = ref();
 const chaptersRef = ref();
+let readerControlsTimer: ReturnType<typeof setTimeout> | undefined;
 
 const topTarget = () => contentRef.value as HTMLElement;
+const settingBox = useBus(EVENT_SETTING_BOX);
 
 onClickOutside(chaptersRef, () => (chaptersVisible.value = false));
 
 const { settingStore, content, contentType, toChapter, lastChapter, nextChapter, onPrevChapter, onNextChapter, loading, init } =
   useContent(contentRef);
 useTheme(contentRef);
+
+function resetReaderControlsTimer() {
+  if (readerControlsTimer) {
+    clearTimeout(readerControlsTimer);
+  }
+  readerControlsTimer = setTimeout(() => {
+    readerControlsVisible.value = false;
+  }, 3000);
+}
+
+function handleReaderClick(event: MouseEvent) {
+  if (!settingStore.data.autoNextChapter || (event.target as HTMLElement).closest('a, button, input, textarea')) {
+    return;
+  }
+
+  const bounds = contentRef.value.getBoundingClientRect();
+  const isCenterClick =
+    event.clientX >= bounds.left + bounds.width / 3 &&
+    event.clientX <= bounds.right - bounds.width / 3 &&
+    event.clientY >= bounds.top + bounds.height / 3 &&
+    event.clientY <= bounds.bottom - bounds.height / 3;
+
+  if (!isCenterClick) {
+    return;
+  }
+
+  readerControlsVisible.value = true;
+  resetReaderControlsTimer();
+}
+
+onUnmounted(() => {
+  if (readerControlsTimer) {
+    clearTimeout(readerControlsTimer);
+  }
+});
 
 function scrollIntoViewChapter() {
   const el = chaptersRef.value.querySelector(`[title="${readStore.title}"]`);

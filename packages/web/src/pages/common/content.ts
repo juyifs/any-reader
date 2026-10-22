@@ -20,7 +20,7 @@ import { executeCommand } from '@/api/modules/vsc';
 /**
  * 保存阅读历史记录的Hook
  */
-function useSaveHistory(contentRef: Ref<HTMLElement>, options: Ref<any>) {
+function useSaveHistory(contentRef: Ref<HTMLElement>, options: Ref<any>, onScroll: () => void) {
   const savePercentage = debounce(
     (params: any) => {
       saveChapterHistory(params);
@@ -32,6 +32,7 @@ function useSaveHistory(contentRef: Ref<HTMLElement>, options: Ref<any>) {
   );
 
   useEventListener(contentRef, 'scroll', () => {
+    onScroll?.();
     const { chapterPath, filePath, ruleId } = options.value;
     savePercentage({
       ruleId,
@@ -100,7 +101,50 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     _onUnmounted.forEach((fn) => fn());
   });
 
-  useSaveHistory(contentRef, options);
+  let autoNextScrollTimer: ReturnType<typeof setTimeout> | null = null;
+  let autoNextLocked = false;
+
+  const handleAutoNextChapter = () => {
+    if (
+      !settingStore.data.autoNextChapter ||
+      (contentType.value !== ContentType.NOVEL && contentType.value !== ContentType.MANGA) ||
+      !contentRef.value ||
+      !nextChapter.value ||
+      loading.value ||
+      autoNextLocked
+    ) {
+      return;
+    }
+
+    const { scrollTop, clientHeight, scrollHeight } = contentRef.value;
+    const threshold = Math.max(80, clientHeight * 0.15);
+    const isAtBottom = scrollTop + clientHeight + threshold >= scrollHeight;
+
+    if (!isAtBottom) {
+      return;
+    }
+
+    autoNextLocked = true;
+    autoNextScrollTimer && clearTimeout(autoNextScrollTimer);
+    autoNextScrollTimer = setTimeout(() => {
+      if (!contentRef.value) {
+        autoNextLocked = false;
+        return;
+      }
+
+      const { scrollTop: latestScrollTop, clientHeight: latestClientHeight, scrollHeight: latestScrollHeight } = contentRef.value;
+      const latestThreshold = Math.max(80, latestClientHeight * 0.15);
+      const stillAtBottom = latestScrollTop + latestClientHeight + latestThreshold >= latestScrollHeight;
+
+      if (settingStore.data.autoNextChapter && stillAtBottom && nextChapter.value) {
+        onNextChapter();
+      }
+
+      autoNextLocked = false;
+    }, 400);
+  };
+
+  useSaveHistory(contentRef, options, handleAutoNextChapter);
   const tts = useTTS(contentRef, onNextChapter);
   let ttsStatus = false;
 
@@ -148,6 +192,10 @@ export function useContent(contentRef: Ref<HTMLElement>) {
    * @param noCache 是否不使用缓存
    */
   async function init(noCache = false) {
+    autoNextLocked = false;
+    autoNextScrollTimer && clearTimeout(autoNextScrollTimer);
+    autoNextScrollTimer = null;
+
     const { chapterPath: _chapterPath, filePath, ruleId, percentage } = route.query as Record<string, string>;
     content.value = [];
     loading.value = true;

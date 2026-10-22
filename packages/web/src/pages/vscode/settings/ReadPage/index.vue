@@ -40,6 +40,9 @@
         @input="(event) => (settingStore.data.readStyle.sectionSpacing = +event.target.value)"
       />
     </SettingRow>
+    <SettingRow title="滚动到底部自动下一章">
+      <input v-model="settingStore.data.autoNextChapter" type="checkbox" />
+    </SettingRow>
     <SettingRow title="文字颜色">
       <div class="flex items-center">
         <input v-model="settingStore.data.readStyle.textColor" type="color" style="border: solid 1px rgba(0, 0, 0, 0.1)" />
