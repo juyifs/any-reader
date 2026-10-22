@@ -34,11 +34,14 @@ function useSaveHistory(contentRef: Ref<HTMLElement>, options: Ref<any>, onScrol
   useEventListener(contentRef, 'scroll', () => {
     onScroll?.();
     const { chapterPath, filePath, ruleId } = options.value;
+    const isPaged = contentRef.value.classList.contains('reader-paged-container');
+    const scrollableLength = isPaged ? contentRef.value.scrollWidth - contentRef.value.clientWidth : contentRef.value.scrollHeight;
+    const currentPosition = isPaged ? contentRef.value.scrollLeft : contentRef.value.scrollTop;
     savePercentage({
       ruleId,
       filePath,
       chapterPath,
-      percentage: Math.floor((contentRef.value.scrollTop / contentRef.value.scrollHeight) * 100000)
+      percentage: scrollableLength > 0 ? Math.floor((currentPosition / scrollableLength) * 100000) : 0
     });
   });
 }
@@ -116,11 +119,14 @@ export function useContent(contentRef: Ref<HTMLElement>) {
       return;
     }
 
-    const { scrollTop, clientHeight, scrollHeight } = contentRef.value;
-    const threshold = Math.max(80, clientHeight * 0.15);
-    const isAtBottom = scrollTop + clientHeight + threshold >= scrollHeight;
+    const isPaged = contentRef.value.classList.contains('reader-paged-container');
+    const currentPosition = isPaged ? contentRef.value.scrollLeft : contentRef.value.scrollTop;
+    const viewportLength = isPaged ? contentRef.value.clientWidth : contentRef.value.clientHeight;
+    const contentLength = isPaged ? contentRef.value.scrollWidth : contentRef.value.scrollHeight;
+    const threshold = isPaged ? Math.max(2, viewportLength * 0.05) : Math.max(80, viewportLength * 0.15);
+    const isAtEnd = currentPosition + viewportLength + threshold >= contentLength;
 
-    if (!isAtBottom) {
+    if (!isAtEnd) {
       return;
     }
 
@@ -132,11 +138,14 @@ export function useContent(contentRef: Ref<HTMLElement>) {
         return;
       }
 
-      const { scrollTop: latestScrollTop, clientHeight: latestClientHeight, scrollHeight: latestScrollHeight } = contentRef.value;
-      const latestThreshold = Math.max(80, latestClientHeight * 0.15);
-      const stillAtBottom = latestScrollTop + latestClientHeight + latestThreshold >= latestScrollHeight;
+      const paged = contentRef.value.classList.contains('reader-paged-container');
+      const latestPosition = paged ? contentRef.value.scrollLeft : contentRef.value.scrollTop;
+      const latestViewportLength = paged ? contentRef.value.clientWidth : contentRef.value.clientHeight;
+      const latestContentLength = paged ? contentRef.value.scrollWidth : contentRef.value.scrollHeight;
+      const latestThreshold = paged ? Math.max(2, latestViewportLength * 0.05) : Math.max(80, latestViewportLength * 0.15);
+      const stillAtEnd = latestPosition + latestViewportLength + latestThreshold >= latestContentLength;
 
-      if (settingStore.data.autoNextChapter && stillAtBottom && nextChapter.value) {
+      if (settingStore.data.autoNextChapter && stillAtEnd && nextChapter.value) {
         onNextChapter();
       }
 
@@ -198,6 +207,10 @@ export function useContent(contentRef: Ref<HTMLElement>) {
 
     const { chapterPath: _chapterPath, filePath, ruleId, percentage } = route.query as Record<string, string>;
     content.value = [];
+    if (contentRef.value) {
+      contentRef.value.scrollTop = 0;
+      contentRef.value.scrollLeft = 0;
+    }
     loading.value = true;
     const res = await getContent({
       ...route.query,
@@ -252,8 +265,13 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     await nextTick();
 
     if (percentage && contentRef.value) {
-      const scrollTop = contentRef.value.scrollHeight * (+percentage / 100000);
-      contentRef.value.scrollTop = scrollTop;
+      if (contentRef.value.classList.contains('reader-paged-container')) {
+        const maxScrollLeft = contentRef.value.scrollWidth - contentRef.value.clientWidth;
+        contentRef.value.scrollLeft = maxScrollLeft * (+percentage / 100000);
+      } else {
+        const scrollTop = contentRef.value.scrollHeight * (+percentage / 100000);
+        contentRef.value.scrollTop = scrollTop;
+      }
     }
 
     if (ttsStatus) {
@@ -304,6 +322,11 @@ export function useContent(contentRef: Ref<HTMLElement>) {
    * 向上翻页
    */
   function onPageUp() {
+    if (contentRef.value.classList.contains('reader-paged-container')) {
+      contentRef.value.scrollLeft = Math.max(0, contentRef.value.scrollLeft - contentRef.value.clientWidth);
+      return;
+    }
+
     contentRef.value.scrollTo({
       top: contentRef.value.scrollTop - contentRef.value.offsetHeight + 15,
       behavior: 'smooth'
@@ -314,6 +337,16 @@ export function useContent(contentRef: Ref<HTMLElement>) {
    * 向下翻页
    */
   function onPageDown() {
+    if (contentRef.value.classList.contains('reader-paged-container')) {
+      const maxScrollLeft = contentRef.value.scrollWidth - contentRef.value.clientWidth;
+      if (contentRef.value.scrollLeft >= maxScrollLeft && settingStore.data.autoNextChapter && nextChapter.value) {
+        onNextChapter();
+        return;
+      }
+      contentRef.value.scrollLeft = Math.min(maxScrollLeft, contentRef.value.scrollLeft + contentRef.value.clientWidth);
+      return;
+    }
+
     contentRef.value.scrollTo({
       top: contentRef.value.scrollTop + contentRef.value.offsetHeight - 15,
       behavior: 'smooth'

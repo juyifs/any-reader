@@ -16,19 +16,22 @@
         v-focus
         tabindex="0"
         class="relative h-full flex flex-1 flex-col overflow-y-auto indent-2em outline-none sm:px-60"
+        :class="{ 'reader-paged-container': settingStore.data.pageTurnMode === 'tap' }"
         @click="handleReaderClick"
       >
-        <!-- 漫画 -->
-        <template v-if="contentType === ContentType.MANGA">
-          <img v-for="(row, idx) in content" :key="idx" :src="row" />
-        </template>
-        <!-- 小说 -->
-        <template v-else>
-          <div v-for="(row, idx) in content" :key="idx" class="center-row transition-300 transition-color ease" :data-idx="idx" v-html="row"></div>
-        </template>
+        <div class="reader-pages" :class="{ 'reader-pages--paged': settingStore.data.pageTurnMode === 'tap' }">
+          <!-- 漫画 -->
+          <template v-if="contentType === ContentType.MANGA">
+            <img v-for="(row, idx) in content" :key="idx" class="reader-page-image" :src="row" />
+          </template>
+          <!-- 小说 -->
+          <template v-else>
+            <div v-for="(row, idx) in content" :key="idx" class="center-row transition-300 transition-color ease" :data-idx="idx" v-html="row"></div>
+          </template>
+        </div>
 
         <!-- 上下章节按钮 -->
-        <div v-if="!settingStore.data.autoNextChapter" class="flex justify-center">
+        <div v-if="!settingStore.data.autoNextChapter && settingStore.data.pageTurnMode !== 'tap'" class="flex justify-center">
           <a-button-group class="reader-toolbar-buttons">
             <a-button
               type="text"
@@ -72,7 +75,7 @@
         </div>
       </div>
       <div
-        v-if="settingStore.data.autoNextChapter && readerControlsVisible"
+        v-if="(settingStore.data.autoNextChapter || settingStore.data.pageTurnMode === 'tap') && readerControlsVisible"
         class="absolute bottom-20 left-50% z-10 translate-x--50% rounded-8 bg-[--background-color] px-5 py-2 shadow-lg"
         @click.stop="resetReaderControlsTimer"
       >
@@ -159,7 +162,7 @@
 <script setup lang="ts">
 import { ContentType } from '@any-reader/rule-utils';
 import { SettingOutlined, StarFilled, StarOutlined } from '@ant-design/icons-vue';
-import { onClickOutside } from '@vueuse/core';
+import { onClickOutside, useResizeObserver } from '@vueuse/core';
 import { useChaptersStore } from '@/stores/chapters';
 import { useFavoritesStore } from '@/stores/favorites';
 import { useReadStore } from '@/stores/read';
@@ -190,6 +193,14 @@ onClickOutside(chaptersRef, () => (chaptersVisible.value = false));
 const { settingStore, content, contentType, toChapter, lastChapter, nextChapter, onPrevChapter, onNextChapter, onPageUp, onPageDown, loading, init } =
   useContent(contentRef);
 useTheme(contentRef);
+
+useResizeObserver(contentRef, ([entry]) => {
+  const element = entry.target as HTMLElement;
+  const style = getComputedStyle(element);
+  const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+  const pageWidth = Math.max(0, element.clientWidth - horizontalPadding);
+  element.style.setProperty('--reader-page-width', `${pageWidth}px`);
+});
 
 function toggleFavorite() {
   if (!favoriteRow.value.url || !favoriteRow.value.ruleId) return;
@@ -225,7 +236,7 @@ function handleReaderClick(event: MouseEvent) {
     }
   }
 
-  if (!settingStore.data.autoNextChapter) return;
+  if (!settingStore.data.autoNextChapter && settingStore.data.pageTurnMode !== 'tap') return;
 
   const isCenterClick = event.clientY >= bounds.top + bounds.height / 3 && event.clientY <= bounds.bottom - bounds.height / 3;
   if (isCenterClick) {
@@ -282,5 +293,30 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
   margin-bottom: calc(var(--section-spacing) * 1px);
   font-weight: var(--font-weight);
   opacity: var(--text-opacity);
+}
+
+.reader-paged-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.reader-paged-container::-webkit-scrollbar {
+  display: none;
+}
+
+.reader-pages--paged {
+  width: var(--reader-page-width);
+  height: 100%;
+  column-width: var(--reader-page-width);
+  column-gap: 0;
+  column-fill: auto;
+}
+
+.reader-page-image {
+  width: 100%;
+  max-height: 100%;
+  break-inside: avoid;
+  object-fit: contain;
 }
 </style>
