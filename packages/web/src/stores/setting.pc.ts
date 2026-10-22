@@ -35,11 +35,13 @@ export type KeyboardShortcuts = {
 
 // 侧边栏
 export type Sidebar = 'left' | 'right' | 'hidden' | '';
+export type PageTurnMode = 'scroll' | 'tap';
 
 export type Setting = {
   readStyle: ReadStyle;
   keyboardShortcuts: KeyboardShortcuts;
   autoNextChapter: boolean;
+  pageTurnMode: PageTurnMode;
   sidebar: Sidebar;
   bookDir: string;
   theme: ThemeToken | null;
@@ -65,6 +67,7 @@ export const useSettingStore = defineStore('setting', () => {
       tts: ''
     },
     autoNextChapter: true,
+    pageTurnMode: 'scroll',
     sidebar: 'left',
     bookDir: '',
     theme: null

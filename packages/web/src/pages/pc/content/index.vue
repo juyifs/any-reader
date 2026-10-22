@@ -89,6 +89,10 @@
             下一章
             <RightOutlined />
           </a-button>
+          <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" @click="settingBox.emit">
+            <SettingOutlined />
+            设置
+          </a-button>
         </a-button-group>
       </div>
       <a-back-top class="hidden sm:block" :visibility-height="100" :target="topTarget" />
@@ -155,7 +159,7 @@ const settingBox = useBus(EVENT_SETTING_BOX);
 
 onClickOutside(chaptersRef, () => (chaptersVisible.value = false));
 
-const { settingStore, content, contentType, toChapter, lastChapter, nextChapter, onPrevChapter, onNextChapter, loading, init } =
+const { settingStore, content, contentType, toChapter, lastChapter, nextChapter, onPrevChapter, onNextChapter, onPageUp, onPageDown, loading, init } =
   useContent(contentRef);
 useTheme(contentRef);
 
@@ -169,23 +173,32 @@ function resetReaderControlsTimer() {
 }
 
 function handleReaderClick(event: MouseEvent) {
-  if (!settingStore.data.autoNextChapter || (event.target as HTMLElement).closest('a, button, input, textarea')) {
+  if ((event.target as HTMLElement).closest('a, button, input, textarea') || window.getSelection()?.toString()) {
     return;
   }
 
   const bounds = contentRef.value.getBoundingClientRect();
-  const isCenterClick =
-    event.clientX >= bounds.left + bounds.width / 3 &&
-    event.clientX <= bounds.right - bounds.width / 3 &&
-    event.clientY >= bounds.top + bounds.height / 3 &&
-    event.clientY <= bounds.bottom - bounds.height / 3;
+  const relativeX = (event.clientX - bounds.left) / bounds.width;
 
-  if (!isCenterClick) {
-    return;
+  if (settingStore.data.pageTurnMode === 'tap') {
+    if (relativeX <= 0.3) {
+      onPageUp();
+      return;
+    }
+
+    if (relativeX >= 0.7) {
+      onPageDown();
+      return;
+    }
   }
 
-  readerControlsVisible.value = true;
-  resetReaderControlsTimer();
+  if (!settingStore.data.autoNextChapter) return;
+
+  const isCenterClick = event.clientY >= bounds.top + bounds.height / 3 && event.clientY <= bounds.bottom - bounds.height / 3;
+  if (isCenterClick) {
+    readerControlsVisible.value = true;
+    resetReaderControlsTimer();
+  }
 }
 
 onUnmounted(() => {

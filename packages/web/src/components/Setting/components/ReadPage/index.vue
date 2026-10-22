@@ -31,6 +31,12 @@
     <SettingRow title="段落间距">
       <a-input-number v-model:value="settingStore.data.readStyle.sectionSpacing" class="!w-120px" mode="button" />
     </SettingRow>
+    <SettingRow title="翻页方式">
+      <a-select v-model:value="settingStore.data.pageTurnMode" class="!w-180px">
+        <a-select-option value="scroll">滚动</a-select-option>
+        <a-select-option value="tap">左右点击翻屏</a-select-option>
+      </a-select>
+    </SettingRow>
     <SettingRow title="滚动到底部自动下一章">
       <a-switch v-model:checked="settingStore.data.autoNextChapter" />
     </SettingRow>

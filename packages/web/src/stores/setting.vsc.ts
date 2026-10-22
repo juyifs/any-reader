@@ -34,6 +34,7 @@ export type Setting = {
   readStyle: ReadStyle;
   keyboardShortcuts: KeyboardShortcuts;
   autoNextChapter: boolean;
+  pageTurnMode: 'scroll' | 'tap';
   bookDir: string;
   theme: ThemeToken | null;
 };
@@ -58,6 +59,7 @@ export const useSettingStore = defineStore('setting', () => {
       tts: ''
     },
     autoNextChapter: true,
+    pageTurnMode: 'scroll',
     bookDir: '',
     theme: null
   });
