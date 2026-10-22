@@ -58,6 +58,16 @@
               <SettingOutlined />
               设置
             </a-button>
+            <a-button
+              type="text"
+              :style="{ color: settingStore.data.readStyle.textColor }"
+              :title="isStarred ? '取消收藏' : '收藏'"
+              @click="toggleFavorite"
+            >
+              <StarFilled v-if="isStarred" />
+              <StarOutlined v-else />
+              {{ isStarred ? '取消收藏' : '收藏' }}
+            </a-button>
           </a-button-group>
         </div>
       </div>
@@ -92,6 +102,16 @@
           <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" @click="settingBox.emit">
             <SettingOutlined />
             设置
+          </a-button>
+          <a-button
+            type="text"
+            :style="{ color: settingStore.data.readStyle.textColor }"
+            :title="isStarred ? '取消收藏' : '收藏'"
+            @click="toggleFavorite"
+          >
+            <StarFilled v-if="isStarred" />
+            <StarOutlined v-else />
+            {{ isStarred ? '取消收藏' : '收藏' }}
           </a-button>
         </a-button-group>
       </div>
@@ -138,15 +158,18 @@
 
 <script setup lang="ts">
 import { ContentType } from '@any-reader/rule-utils';
-import { SettingOutlined } from '@ant-design/icons-vue';
+import { SettingOutlined, StarFilled, StarOutlined } from '@ant-design/icons-vue';
 import { onClickOutside } from '@vueuse/core';
 import { useChaptersStore } from '@/stores/chapters';
+import { useFavoritesStore } from '@/stores/favorites';
 import { useReadStore } from '@/stores/read';
 import { useBus, EVENT_CHAPTERS_BOX, EVENT_SETTING_BOX } from '@/utils/bus';
 import { useContent, useTheme } from '@/pages/common/content';
 
 const chaptersStore = useChaptersStore();
+const favoritesStore = useFavoritesStore();
 const readStore = useReadStore();
+const route = useRoute();
 
 const chaptersVisible = ref(false);
 const readerControlsVisible = ref(false);
@@ -156,12 +179,22 @@ let readerControlsTimer: ReturnType<typeof setTimeout> | undefined;
 
 const topTarget = () => contentRef.value as HTMLElement;
 const settingBox = useBus(EVENT_SETTING_BOX);
+const favoriteRow = computed(() => ({
+  url: String(route.query.filePath || ''),
+  ruleId: String(route.query.ruleId || '')
+}));
+const isStarred = computed(() => favoritesStore.starred(favoriteRow.value));
 
 onClickOutside(chaptersRef, () => (chaptersVisible.value = false));
 
 const { settingStore, content, contentType, toChapter, lastChapter, nextChapter, onPrevChapter, onNextChapter, onPageUp, onPageDown, loading, init } =
   useContent(contentRef);
 useTheme(contentRef);
+
+function toggleFavorite() {
+  if (!favoriteRow.value.url || !favoriteRow.value.ruleId) return;
+  favoritesStore.star(favoriteRow.value);
+}
 
 function resetReaderControlsTimer() {
   if (readerControlsTimer) {
