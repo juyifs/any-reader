@@ -296,8 +296,7 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
 }
 
 .reader-paged-container {
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden !important;
   scrollbar-width: none;
 }
 
