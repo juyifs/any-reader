@@ -29,7 +29,7 @@
 
         <!-- 上下章节按钮 -->
         <div v-if="!settingStore.data.autoNextChapter" class="flex justify-center">
-          <a-button-group>
+          <a-button-group class="reader-toolbar-buttons">
             <a-button
               type="text"
               :disabled="!lastChapter"
@@ -76,7 +76,7 @@
         class="absolute bottom-20 left-50% z-10 translate-x--50% rounded-8 bg-[--background-color] px-5 py-2 shadow-lg"
         @click.stop="resetReaderControlsTimer"
       >
-        <a-button-group>
+        <a-button-group class="reader-toolbar-buttons">
           <a-button
             type="text"
             :disabled="!lastChapter"
@@ -254,6 +254,13 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
 </script>
 
 <style scoped>
+:deep(.reader-toolbar-buttons) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100vw - 16px);
+}
+
 :deep(p) {
   margin: 0;
   padding: 0;
