@@ -40,10 +40,16 @@
         @input="(event) => (settingStore.data.readStyle.sectionSpacing = +event.target.value)"
       />
     </SettingRow>
-    <SettingRow title="翻页方式">
-      <vscode-dropdown :value="settingStore.data.pageTurnMode" @input="(event) => (settingStore.data.pageTurnMode = event.target.value)">
+    <SettingRow title="小说翻页方式">
+      <vscode-dropdown :value="settingStore.data.novelPageTurnMode" @input="(event) => (settingStore.data.novelPageTurnMode = event.target.value)">
         <vscode-option value="scroll">滚动</vscode-option>
-        <vscode-option value="tap">左右点击翻屏</vscode-option>
+        <vscode-option value="tap">左右翻页</vscode-option>
+      </vscode-dropdown>
+    </SettingRow>
+    <SettingRow title="漫画翻页方式">
+      <vscode-dropdown :value="settingStore.data.mangaPageTurnMode" @input="(event) => (settingStore.data.mangaPageTurnMode = event.target.value)">
+        <vscode-option value="scroll">滚动</vscode-option>
+        <vscode-option value="tap">左右翻页</vscode-option>
       </vscode-dropdown>
     </SettingRow>
     <SettingRow title="滚动到底部自动下一章">

@@ -16,10 +16,10 @@
         v-focus
         tabindex="0"
         class="relative h-full flex flex-1 flex-col overflow-y-auto indent-2em outline-none sm:px-60"
-        :class="{ 'reader-paged-container': settingStore.data.pageTurnMode === 'tap' }"
+        :class="{ 'reader-paged-container': pageTurnMode === 'tap' }"
         @click="handleReaderClick"
       >
-        <div class="reader-pages" :class="{ 'reader-pages--paged': settingStore.data.pageTurnMode === 'tap' }">
+        <div class="reader-pages" :class="{ 'reader-pages--paged': pageTurnMode === 'tap' }">
           <!-- 漫画 -->
           <template v-if="contentType === ContentType.MANGA">
             <img v-for="(row, idx) in content" :key="idx" class="reader-page-image" :src="row" />
@@ -31,7 +31,7 @@
         </div>
 
         <!-- 上下章节按钮 -->
-        <div v-if="!settingStore.data.autoNextChapter && settingStore.data.pageTurnMode !== 'tap'" class="flex justify-center">
+        <div v-if="!settingStore.data.autoNextChapter && pageTurnMode !== 'tap'" class="flex justify-center">
           <a-button-group class="reader-toolbar-buttons">
             <a-button
               type="text"
@@ -75,7 +75,7 @@
         </div>
       </div>
       <div
-        v-if="(settingStore.data.autoNextChapter || settingStore.data.pageTurnMode === 'tap') && readerControlsVisible"
+        v-if="(settingStore.data.autoNextChapter || pageTurnMode === 'tap') && readerControlsVisible"
         class="absolute bottom-20 left-50% z-10 translate-x--50% rounded-8 bg-[--background-color] px-5 py-2 shadow-lg"
         @click.stop="resetReaderControlsTimer"
       >
@@ -192,6 +192,9 @@ onClickOutside(chaptersRef, () => (chaptersVisible.value = false));
 
 const { settingStore, content, contentType, toChapter, lastChapter, nextChapter, onPrevChapter, onNextChapter, onPageUp, onPageDown, loading, init } =
   useContent(contentRef);
+const pageTurnMode = computed(() =>
+  contentType.value === ContentType.MANGA ? settingStore.data.mangaPageTurnMode : settingStore.data.novelPageTurnMode
+);
 useTheme(contentRef);
 
 useResizeObserver(contentRef, ([entry]) => {
@@ -224,7 +227,7 @@ function handleReaderClick(event: MouseEvent) {
   const bounds = contentRef.value.getBoundingClientRect();
   const relativeX = (event.clientX - bounds.left) / bounds.width;
 
-  if (settingStore.data.pageTurnMode === 'tap') {
+  if (pageTurnMode.value === 'tap') {
     if (relativeX <= 0.3) {
       onPageUp();
       return;
@@ -236,7 +239,7 @@ function handleReaderClick(event: MouseEvent) {
     }
   }
 
-  if (!settingStore.data.autoNextChapter && settingStore.data.pageTurnMode !== 'tap') return;
+  if (!settingStore.data.autoNextChapter && pageTurnMode.value !== 'tap') return;
 
   const isCenterClick = event.clientY >= bounds.top + bounds.height / 3 && event.clientY <= bounds.bottom - bounds.height / 3;
   if (isCenterClick) {

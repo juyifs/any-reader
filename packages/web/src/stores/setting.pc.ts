@@ -41,7 +41,8 @@ export type Setting = {
   readStyle: ReadStyle;
   keyboardShortcuts: KeyboardShortcuts;
   autoNextChapter: boolean;
-  pageTurnMode: PageTurnMode;
+  novelPageTurnMode: PageTurnMode;
+  mangaPageTurnMode: PageTurnMode;
   sidebar: Sidebar;
   bookDir: string;
   theme: ThemeToken | null;
@@ -67,7 +68,8 @@ export const useSettingStore = defineStore('setting', () => {
       tts: ''
     },
     autoNextChapter: true,
-    pageTurnMode: 'scroll',
+    novelPageTurnMode: 'scroll',
+    mangaPageTurnMode: 'scroll',
     sidebar: 'left',
     bookDir: '',
     theme: null
@@ -77,7 +79,14 @@ export const useSettingStore = defineStore('setting', () => {
   async function sync() {
     const res = await readConfig().catch(() => {});
     if (res?.code === 0) {
-      merge(data, res.data || {});
+      const config = res.data || {};
+      const legacyPageTurnMode = config.pageTurnMode;
+      merge(data, config);
+      if (legacyPageTurnMode === 'scroll' || legacyPageTurnMode === 'tap') {
+        if (!Object.hasOwn(config, 'novelPageTurnMode')) data.novelPageTurnMode = legacyPageTurnMode;
+        if (!Object.hasOwn(config, 'mangaPageTurnMode')) data.mangaPageTurnMode = legacyPageTurnMode;
+        delete (data as Setting & { pageTurnMode?: PageTurnMode }).pageTurnMode;
+      }
     }
   }
 
