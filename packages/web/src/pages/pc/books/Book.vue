@@ -10,24 +10,11 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{
-  name: string;
-  cover?: string;
-  author?: string;
-  description?: string;
-  filePath?: string;
-  ruleId?: string;
-  clickHandler?: () => void;
-}>();
+const props = defineProps<{ name: string; cover?: string; author?: string; description?: string; filePath?: string; ruleId?: string }>();
 
 const router = useRouter();
 
 function showChapter() {
-  if (props.clickHandler) {
-    props.clickHandler();
-    return;
-  }
-
   router.push({
     path: '/chapter',
     query: {
