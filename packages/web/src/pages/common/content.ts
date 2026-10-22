@@ -104,11 +104,40 @@ export function useContent(contentRef: Ref<HTMLElement>) {
   });
 
   let autoNextScrollTimer: ReturnType<typeof setTimeout> | null = null;
+  let autoPrevScrollTimer: ReturnType<typeof setTimeout> | null = null;
   let autoNextLocked = false;
+  let autoPrevLocked = false;
 
+  onUnmounted(() => {
+    autoNextScrollTimer && clearTimeout(autoNextScrollTimer);
+    autoPrevScrollTimer && clearTimeout(autoPrevScrollTimer);
+  });
+
+  const isAtScrollStart = () => !contentRef.value || contentRef.value.scrollTop <= 1;
   const isAtScrollEnd = () => {
     if (!contentRef.value) return false;
     return contentRef.value.scrollTop + contentRef.value.clientHeight >= contentRef.value.scrollHeight - 1;
+  };
+
+  const triggerPrevChapter = () => {
+    if (
+      (contentType.value !== ContentType.NOVEL && contentType.value !== ContentType.MANGA) ||
+      !lastChapter.value ||
+      loading.value ||
+      autoPrevLocked ||
+      !isAtScrollStart()
+    ) {
+      return;
+    }
+
+    autoPrevLocked = true;
+    autoPrevScrollTimer && clearTimeout(autoPrevScrollTimer);
+    autoPrevScrollTimer = setTimeout(() => {
+      if (isAtScrollStart() && lastChapter.value) {
+        onPrevChapter();
+      }
+      autoPrevLocked = false;
+    }, 250);
   };
 
   const triggerAutoNextChapter = () => {
@@ -138,19 +167,34 @@ export function useContent(contentRef: Ref<HTMLElement>) {
   };
 
   useEventListener(contentRef, 'wheel', (event: WheelEvent) => {
+    const pageTurnMode = contentType.value === ContentType.MANGA ? settingStore.data.mangaPageTurnMode : settingStore.data.novelPageTurnMode;
+    if (pageTurnMode === 'scroll' && event.deltaY < 0 && isAtScrollStart()) {
+      triggerPrevChapter();
+      return;
+    }
+
     if (event.deltaY > 0 && isAtScrollEnd()) {
       triggerAutoNextChapter();
     }
   });
 
   let touchStartY = 0;
+  let touchStartedAtScrollStart = false;
   let touchStartedAtScrollEnd = false;
   useEventListener(contentRef, 'touchstart', (event: TouchEvent) => {
     touchStartY = event.touches[0]?.clientY || 0;
+    touchStartedAtScrollStart = isAtScrollStart();
     touchStartedAtScrollEnd = isAtScrollEnd();
   });
   useEventListener(contentRef, 'touchmove', (event: TouchEvent) => {
     const currentY = event.touches[0]?.clientY || touchStartY;
+    const pageTurnMode = contentType.value === ContentType.MANGA ? settingStore.data.mangaPageTurnMode : settingStore.data.novelPageTurnMode;
+    if (pageTurnMode === 'scroll' && touchStartedAtScrollStart && currentY - touchStartY > 10) {
+      triggerPrevChapter();
+      touchStartedAtScrollStart = false;
+      return;
+    }
+
     if (touchStartedAtScrollEnd && touchStartY - currentY > 10) {
       triggerAutoNextChapter();
       touchStartedAtScrollEnd = false;
@@ -208,6 +252,9 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     autoNextLocked = false;
     autoNextScrollTimer && clearTimeout(autoNextScrollTimer);
     autoNextScrollTimer = null;
+    autoPrevLocked = false;
+    autoPrevScrollTimer && clearTimeout(autoPrevScrollTimer);
+    autoPrevScrollTimer = null;
 
     const { chapterPath: _chapterPath, filePath, ruleId, percentage } = route.query as Record<string, string>;
     content.value = [];
@@ -327,7 +374,16 @@ export function useContent(contentRef: Ref<HTMLElement>) {
    */
   function onPageUp() {
     if (contentRef.value.classList.contains('reader-paged-container')) {
+      if (contentRef.value.scrollLeft <= 1 && lastChapter.value) {
+        onPrevChapter();
+        return;
+      }
       contentRef.value.scrollLeft = Math.max(0, contentRef.value.scrollLeft - contentRef.value.clientWidth);
+      return;
+    }
+
+    if (contentRef.value.scrollTop <= 1 && lastChapter.value) {
+      onPrevChapter();
       return;
     }
 
