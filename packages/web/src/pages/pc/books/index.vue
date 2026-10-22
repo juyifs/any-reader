@@ -27,8 +27,8 @@ import Favorites from './Favorites.vue';
 import History from './History.vue';
 
 const navs = [
-  { title: '本地', component: Local },
   { title: '收藏', component: Favorites },
+  { title: '本地', component: Local },
   { title: '历史', component: History }
 ];
 
