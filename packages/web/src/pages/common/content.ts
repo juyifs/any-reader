@@ -20,7 +20,7 @@ import { executeCommand } from '@/api/modules/vsc';
 /**
  * 保存阅读历史记录的Hook
  */
-function useSaveHistory(contentRef: Ref<HTMLElement>, options: Ref<any>, onScroll: () => void) {
+function useSaveHistory(contentRef: Ref<HTMLElement>, options: Ref<any>) {
   const savePercentage = debounce(
     (params: any) => {
       saveChapterHistory(params);
@@ -32,7 +32,6 @@ function useSaveHistory(contentRef: Ref<HTMLElement>, options: Ref<any>, onScrol
   );
 
   useEventListener(contentRef, 'scroll', () => {
-    onScroll?.();
     const { chapterPath, filePath, ruleId } = options.value;
     const isPaged = contentRef.value.classList.contains('reader-paged-container');
     const scrollableLength = isPaged ? contentRef.value.scrollWidth - contentRef.value.clientWidth : contentRef.value.scrollHeight;
@@ -107,45 +106,30 @@ export function useContent(contentRef: Ref<HTMLElement>) {
   let autoNextScrollTimer: ReturnType<typeof setTimeout> | null = null;
   let autoNextLocked = false;
 
-  const handleAutoNextChapter = () => {
+  const isAtScrollEnd = () => {
+    if (!contentRef.value) return false;
+    return contentRef.value.scrollTop + contentRef.value.clientHeight >= contentRef.value.scrollHeight - 1;
+  };
+
+  const triggerAutoNextChapter = () => {
     if (
       !settingStore.data.autoNextChapter ||
       (contentType.value !== ContentType.NOVEL && contentType.value !== ContentType.MANGA) ||
       !contentRef.value ||
       !nextChapter.value ||
       loading.value ||
-      autoNextLocked
+      autoNextLocked ||
+      !isAtScrollEnd() ||
+      settingStore.data[contentType.value === ContentType.MANGA ? 'mangaPageTurnMode' : 'novelPageTurnMode'] === 'tap'
     ) {
-      return;
-    }
-
-    const isPaged = contentRef.value.classList.contains('reader-paged-container');
-    const currentPosition = isPaged ? contentRef.value.scrollLeft : contentRef.value.scrollTop;
-    const viewportLength = isPaged ? contentRef.value.clientWidth : contentRef.value.clientHeight;
-    const contentLength = isPaged ? contentRef.value.scrollWidth : contentRef.value.scrollHeight;
-    const threshold = isPaged ? Math.max(2, viewportLength * 0.05) : Math.max(80, viewportLength * 0.15);
-    const isAtEnd = currentPosition + viewportLength + threshold >= contentLength;
-
-    if (!isAtEnd) {
       return;
     }
 
     autoNextLocked = true;
     autoNextScrollTimer && clearTimeout(autoNextScrollTimer);
     autoNextScrollTimer = setTimeout(() => {
-      if (!contentRef.value) {
-        autoNextLocked = false;
-        return;
-      }
-
-      const paged = contentRef.value.classList.contains('reader-paged-container');
-      const latestPosition = paged ? contentRef.value.scrollLeft : contentRef.value.scrollTop;
-      const latestViewportLength = paged ? contentRef.value.clientWidth : contentRef.value.clientHeight;
-      const latestContentLength = paged ? contentRef.value.scrollWidth : contentRef.value.scrollHeight;
-      const latestThreshold = paged ? Math.max(2, latestViewportLength * 0.05) : Math.max(80, latestViewportLength * 0.15);
-      const stillAtEnd = latestPosition + latestViewportLength + latestThreshold >= latestContentLength;
-
-      if (settingStore.data.autoNextChapter && stillAtEnd && nextChapter.value) {
+      const isScrollMode = settingStore.data[contentType.value === ContentType.MANGA ? 'mangaPageTurnMode' : 'novelPageTurnMode'] === 'scroll';
+      if (settingStore.data.autoNextChapter && isScrollMode && isAtScrollEnd() && nextChapter.value) {
         onNextChapter();
       }
 
@@ -153,7 +137,27 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     }, 400);
   };
 
-  useSaveHistory(contentRef, options, handleAutoNextChapter);
+  useEventListener(contentRef, 'wheel', (event: WheelEvent) => {
+    if (event.deltaY > 0 && isAtScrollEnd()) {
+      triggerAutoNextChapter();
+    }
+  });
+
+  let touchStartY = 0;
+  let touchStartedAtScrollEnd = false;
+  useEventListener(contentRef, 'touchstart', (event: TouchEvent) => {
+    touchStartY = event.touches[0]?.clientY || 0;
+    touchStartedAtScrollEnd = isAtScrollEnd();
+  });
+  useEventListener(contentRef, 'touchmove', (event: TouchEvent) => {
+    const currentY = event.touches[0]?.clientY || touchStartY;
+    if (touchStartedAtScrollEnd && touchStartY - currentY > 10) {
+      triggerAutoNextChapter();
+      touchStartedAtScrollEnd = false;
+    }
+  });
+
+  useSaveHistory(contentRef, options);
   const tts = useTTS(contentRef, onNextChapter);
   let ttsStatus = false;
 
@@ -339,7 +343,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
   function onPageDown() {
     if (contentRef.value.classList.contains('reader-paged-container')) {
       const maxScrollLeft = contentRef.value.scrollWidth - contentRef.value.clientWidth;
-      if (contentRef.value.scrollLeft >= maxScrollLeft && settingStore.data.autoNextChapter && nextChapter.value) {
+      if (contentRef.value.scrollLeft >= maxScrollLeft - 1 && settingStore.data.autoNextChapter && nextChapter.value) {
         onNextChapter();
         return;
       }
