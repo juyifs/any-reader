@@ -369,6 +369,15 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     toChapter(nextChapter.value);
   }
 
+  function getPagedPageWidth() {
+    const element = contentRef.value;
+    const pageWidth = Number.parseFloat(getComputedStyle(element).getPropertyValue('--reader-page-width'));
+    if (Number.isFinite(pageWidth) && pageWidth > 0) return pageWidth;
+
+    const style = getComputedStyle(element);
+    return element.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  }
+
   /**
    * 向上翻页
    */
@@ -378,7 +387,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
         onPrevChapter();
         return;
       }
-      contentRef.value.scrollLeft = Math.max(0, contentRef.value.scrollLeft - contentRef.value.clientWidth);
+      contentRef.value.scrollLeft = Math.max(0, contentRef.value.scrollLeft - getPagedPageWidth());
       return;
     }
 
@@ -403,7 +412,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
         onNextChapter();
         return;
       }
-      contentRef.value.scrollLeft = Math.min(maxScrollLeft, contentRef.value.scrollLeft + contentRef.value.clientWidth);
+      contentRef.value.scrollLeft = Math.min(maxScrollLeft, contentRef.value.scrollLeft + getPagedPageWidth());
       return;
     }
 
