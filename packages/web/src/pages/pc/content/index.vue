@@ -203,6 +203,7 @@ useResizeObserver(contentRef, ([entry]) => {
   const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
   const pageWidth = Math.max(0, element.clientWidth - horizontalPadding);
   element.style.setProperty('--reader-page-width', `${pageWidth}px`);
+  element.style.setProperty('--reader-page-gap', `${horizontalPadding}px`);
 });
 
 function toggleFavorite() {
@@ -311,7 +312,7 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
   width: var(--reader-page-width);
   height: 100%;
   column-width: var(--reader-page-width);
-  column-gap: 0;
+  column-gap: var(--reader-page-gap);
   column-fill: auto;
 }
 
