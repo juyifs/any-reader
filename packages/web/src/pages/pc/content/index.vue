@@ -326,6 +326,7 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
 .reader-pages--paged {
   width: var(--reader-page-width);
   height: 100%;
+  margin-right: var(--reader-page-gap);
   column-width: var(--reader-page-width);
   column-gap: var(--reader-page-gap);
   column-fill: auto;
