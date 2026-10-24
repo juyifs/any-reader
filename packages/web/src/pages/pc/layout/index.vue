@@ -176,6 +176,11 @@ function handleReaderSurfaceClick(event: MouseEvent) {
     event.clientY <= bounds.bottom - bounds.height / 3;
   if (!inCenter) return;
 
+  if (readerTopBarVisible.value) {
+    hideReaderTopBar();
+    return;
+  }
+
   readerTopBarVisible.value = true;
   if (readerTopBarTimer) clearTimeout(readerTopBarTimer);
   readerTopBarTimer = setTimeout(() => {

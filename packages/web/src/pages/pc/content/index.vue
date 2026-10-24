@@ -245,6 +245,15 @@ function handleReaderClick(event: MouseEvent) {
 
   const isCenterClick = event.clientY >= bounds.top + bounds.height / 3 && event.clientY <= bounds.bottom - bounds.height / 3;
   if (isCenterClick) {
+    if (readerControlsVisible.value) {
+      readerControlsVisible.value = false;
+      if (readerControlsTimer) {
+        clearTimeout(readerControlsTimer);
+        readerControlsTimer = undefined;
+      }
+      return;
+    }
+
     readerControlsVisible.value = true;
     resetReaderControlsTimer();
   }
