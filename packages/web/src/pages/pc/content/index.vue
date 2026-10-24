@@ -134,18 +134,18 @@
       }"
     >
       <div
-        class="app-region-drag mb-4 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap b-b-1 b-b-[#00000033] b-b-solid p-10 pb-4 text-center"
+        class="app-region-drag mb-4 overflow-hidden text-ellipsis whitespace-nowrap b-b-1 b-b-[#00000033] b-b-solid p-10 pb-4 text-center"
         :title="readStore.title"
-        @click="scrollIntoViewChapter"
       >
         {{ readStore.title || '-' }}
       </div>
 
-      <div class="h-full overflow-auto" style="scrollbar-width: none">
+      <div ref="chapterListRef" class="h-full overflow-auto" style="scrollbar-width: none">
         <div
           v-for="chapter in chaptersStore.chapters"
           :key="chapter.name"
           :title="chapter.name"
+          :aria-current="readStore.path === chapter.chapterPath ? 'true' : undefined"
           :class="[
             'px-10 overflow-hidden whitespace-nowrap text-ellipsis lh-24 hover:bg-[#00000026] cursor-pointer',
             readStore.path === chapter.chapterPath ? 'bg-[#00000026]' : ''
@@ -178,6 +178,7 @@ const chaptersVisible = ref(false);
 const readerControlsVisible = ref(false);
 const contentRef = ref();
 const chaptersRef = ref();
+const chapterListRef = ref<HTMLElement>();
 let readerControlsTimer: ReturnType<typeof setTimeout> | undefined;
 
 const topTarget = () => contentRef.value as HTMLElement;
@@ -255,14 +256,19 @@ onUnmounted(() => {
   }
 });
 
-function scrollIntoViewChapter() {
-  const el = chaptersRef.value.querySelector(`[title="${readStore.title}"]`);
-  el.scrollIntoView({ behavior: 'instant' });
+function scrollCurrentChapterIntoView() {
+  const list = chapterListRef.value;
+  const currentChapter = list?.querySelector<HTMLElement>('[aria-current="true"]');
+  if (!list || !currentChapter) return;
+
+  const listBounds = list.getBoundingClientRect();
+  const chapterBounds = currentChapter.getBoundingClientRect();
+  list.scrollTop += chapterBounds.top - listBounds.top - (list.clientHeight - currentChapter.offsetHeight) / 2;
 }
 
 function showChapters() {
   chaptersVisible.value = true;
-  nextTick(scrollIntoViewChapter);
+  nextTick(scrollCurrentChapterIntoView);
 }
 
 useBus(EVENT_CHAPTERS_BOX).on(showChapters);
