@@ -19,15 +19,29 @@
         :class="{ 'reader-paged-container': pageTurnMode === 'tap' }"
         @click="handleReaderClick"
       >
-        <div class="reader-pages" :class="{ 'reader-pages--paged': pageTurnMode === 'tap' }">
-          <!-- 漫画 -->
-          <template v-if="contentType === ContentType.MANGA">
-            <img v-for="(row, idx) in content" :key="idx" class="reader-page-image" :src="row" />
-          </template>
-          <!-- 小说 -->
-          <template v-else>
-            <div v-for="(row, idx) in content" :key="idx" class="center-row transition-300 transition-color ease" :data-idx="idx" v-html="row"></div>
-          </template>
+        <div :class="['reader-pages-wrap', { 'reader-pages-wrap--paged': pageTurnMode === 'tap' }]">
+          <div ref="readerPagesRef" class="reader-pages" :class="{ 'reader-pages--paged': pageTurnMode === 'tap' }">
+            <!-- 漫画 -->
+            <template v-if="contentType === ContentType.MANGA">
+              <img v-for="(row, idx) in content" :key="idx" class="reader-page-image" :src="row" />
+            </template>
+            <!-- 小说 -->
+            <template v-else>
+              <div
+                v-for="(row, idx) in content"
+                :key="idx"
+                class="center-row transition-300 transition-color ease"
+                :data-idx="idx"
+                v-html="row"
+              ></div>
+            </template>
+          </div>
+          <div
+            v-if="pageTurnMode === 'tap'"
+            class="reader-pages-end-spacer"
+            :style="{ left: `${readerPagesEnd}px`, width: `${readerPagesEndPadding}px` }"
+            aria-hidden="true"
+          ></div>
         </div>
 
         <!-- 上下章节按钮 -->
@@ -179,6 +193,9 @@ const readerControlsVisible = ref(false);
 const contentRef = ref();
 const chaptersRef = ref();
 const chapterListRef = ref<HTMLElement>();
+const readerPagesRef = ref<HTMLElement>();
+const readerPagesEnd = ref(0);
+const readerPagesEndPadding = ref(0);
 let readerControlsTimer: ReturnType<typeof setTimeout> | undefined;
 
 const topTarget = () => contentRef.value as HTMLElement;
@@ -205,7 +222,16 @@ useResizeObserver(contentRef, ([entry]) => {
   const pageWidth = Math.max(0, element.clientWidth - horizontalPadding);
   element.style.setProperty('--reader-page-width', `${pageWidth}px`);
   element.style.setProperty('--reader-page-gap', `${horizontalPadding}px`);
+  nextTick(updateReaderPagesEnd);
 });
+
+watch([content, pageTurnMode, () => settingStore.data.readStyle], () => nextTick(updateReaderPagesEnd), { deep: true, flush: 'post' });
+
+function updateReaderPagesEnd() {
+  if (pageTurnMode.value !== 'tap' || !contentRef.value || !readerPagesRef.value) return;
+  readerPagesEnd.value = readerPagesRef.value.scrollWidth;
+  readerPagesEndPadding.value = parseFloat(getComputedStyle(contentRef.value).paddingRight) || 0;
+}
 
 function toggleFavorite() {
   if (!favoriteRow.value.url || !favoriteRow.value.ruleId) return;
@@ -314,6 +340,13 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
   opacity: var(--text-opacity);
 }
 
+.reader-pages-wrap--paged {
+  position: relative;
+  width: var(--reader-page-width);
+  height: 100%;
+  flex: none;
+}
+
 .reader-paged-container {
   overflow: hidden !important;
   scrollbar-width: none;
@@ -324,12 +357,22 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
 }
 
 .reader-pages--paged {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: var(--reader-page-width);
   height: 100%;
   margin-right: var(--reader-page-gap);
   column-width: var(--reader-page-width);
   column-gap: var(--reader-page-gap);
   column-fill: auto;
+}
+
+.reader-pages-end-spacer {
+  position: absolute;
+  top: 0;
+  height: 1px;
+  pointer-events: none;
 }
 
 .reader-page-image {
