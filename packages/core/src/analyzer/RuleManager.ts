@@ -6,6 +6,7 @@ import { ChapterItem, DiscoverItem, IParser } from '../parser/parser';
 import { LogLevel } from '../logger';
 
 const PAGE_PATTERN = /(\$page)|((^|[^a-zA-Z'"_/-])page([^a-zA-Z0-9'"]|$))/;
+const MAX_CHAPTER_LIST_PAGES = 100;
 
 export class RuleManager implements IParser {
   private rule: Rule;
@@ -117,9 +118,6 @@ export class RuleManager implements IParser {
 
   async getChapter(result: string, page = 1): Promise<ChapterItem[]> {
     this.analyzerManager.logLevel >= LogLevel.Debug && this.analyzerManager.logger.debug(`[getChapter] result:${result}`);
-    this.JSEngine.setEnvironment({
-      result
-    });
     if (this.rule.chapterUrl === '正文') {
       return [
         {
@@ -131,48 +129,62 @@ export class RuleManager implements IParser {
         }
       ];
     }
-    const chapterUrl = this.rule.chapterUrl || result;
-    let body = '';
-
-    this.JSEngine.setEnvironment({
-      page
-    });
-
-    if (chapterUrl !== 'null') {
-      const res = await this.request(parseRequest(await this.analyzerManager.parseJsUrl(chapterUrl), '', result, this.rule, page));
-      body = res.body;
-      this.JSEngine.setEnvironment({
-        baseUrl: res.params.url
-      });
-    }
-
-    this.JSEngine.setEnvironment({
-      lastResult: result,
-      result: body
-    });
-    const description = await this.analyzerManager.getString(this.rule.chapterDescription, body);
-
-    let list = [];
-    if (this.rule.enableMultiRoads) {
-      // TODO: 多线路
-      const roads = await this.analyzerManager.getElements(this.rule.chapterRoads, body);
-      // for (const road of roads) {
-      const road = roads[0];
-      list = await this.getList(road, this.rule.chapterList);
-      // }
-    } else {
-      list = await this.getList(body, this.rule.chapterList);
-    }
     const chapterItems: ChapterItem[] = [];
-    for (const row of list) {
-      chapterItems.push({
-        cover: await this.analyzerManager.getString(this.rule.chapterCover, row),
-        name: (await this.analyzerManager.getString(this.rule.chapterName, row)).trim(),
-        time: await this.analyzerManager.getString(this.rule.chapterTime, row),
-        url: await this.analyzerManager.getUrl(this.rule.chapterResult, this.rule.host, row),
-        description
+    const visitedUrls = new Set<string>();
+    let chapterUrl = this.rule.chapterUrl || result;
+    let currentPage = page;
+
+    while (chapterUrl && currentPage < page + MAX_CHAPTER_LIST_PAGES) {
+      this.JSEngine.setEnvironment({
+        result,
+        lastResult: result,
+        page: currentPage
       });
+
+      const parsedUrl = await this.analyzerManager.parseJsUrl(chapterUrl);
+      const requestParams = parseRequest(parsedUrl, '', result, this.rule, currentPage);
+      if (visitedUrls.has(requestParams.url)) break;
+      visitedUrls.add(requestParams.url);
+
+      let body = '';
+      let currentUrl = requestParams.url;
+      if (chapterUrl !== 'null') {
+        const response = await this.request(requestParams);
+        body = response.body;
+        currentUrl = response.params.url;
+      }
+
+      this.JSEngine.setEnvironment({
+        page: currentPage,
+        lastResult: result,
+        result: body,
+        baseUrl: currentUrl
+      });
+      const description = await this.analyzerManager.getString(this.rule.chapterDescription, body);
+
+      let list = [];
+      if (this.rule.enableMultiRoads) {
+        const roads = await this.analyzerManager.getElements(this.rule.chapterRoads, body);
+        list = await this.getList(roads[0], this.rule.chapterList);
+      } else {
+        list = await this.getList(body, this.rule.chapterList);
+      }
+      for (const row of list) {
+        chapterItems.push({
+          cover: await this.analyzerManager.getString(this.rule.chapterCover, row),
+          name: (await this.analyzerManager.getString(this.rule.chapterName, row)).trim(),
+          time: await this.analyzerManager.getString(this.rule.chapterTime, row),
+          url: await this.analyzerManager.getUrl(this.rule.chapterResult, this.rule.host, row),
+          description
+        });
+      }
+
+      const nextUrl = await this.analyzerManager.getString(this.rule.chapterNextUrl, body);
+      if (!nextUrl) break;
+      chapterUrl = new URL(nextUrl, currentUrl).toString();
+      currentPage++;
     }
+
     return chapterItems;
   }
 

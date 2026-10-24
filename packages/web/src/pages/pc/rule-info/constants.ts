@@ -104,6 +104,13 @@ export const FORM_ITEMS: FormItem[] = [
     debug: true
   },
   {
+    prop: 'chapterNextUrl',
+    label: '章节列表下一页地址',
+    show: (item: Rule) => [NOVEL, VIDEO, MANGA, AUDIO].includes(item.contentType),
+    formStep: 3,
+    debug: true
+  },
+  {
     prop: 'chapterList',
     label: '列表',
     show: (item: Rule) => [NOVEL, VIDEO, MANGA, AUDIO].includes(item.contentType),
