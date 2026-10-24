@@ -32,7 +32,14 @@
       </TopContainer>
       <div class="relative flex flex-1 flex-col overflow-auto sm:flex-row">
         <!-- 侧边栏 - 小屏 -->
-        <div class="h-34 flex items-center bg-[--ar-main-background] px-10 lh-34 sm:hidden">
+        <div
+          v-if="route.path !== '/content' || readerTopBarVisible"
+          :class="[
+            'h-34 flex items-center bg-[--ar-main-background] px-10 lh-34 sm:hidden',
+            route.path === '/content' ? 'absolute left-0 right-0 top-0 z-20 shadow-md' : ''
+          ]"
+          @click.stop
+        >
           <div @click="navsShow = true"><MenuOutlined class="mr-5" /></div>
           <div class="app-region-drag flex flex-1 items-center justify-center">any-reader</div>
           <SearchOutlined @click="navTo('/search')" />
@@ -62,7 +69,7 @@
           </div>
         </div>
         <!-- 路由 -->
-        <div class="flex-1 overflow-hidden bg-[--ar-main-background]">
+        <div ref="pageContentRef" class="flex-1 overflow-hidden bg-[--ar-main-background]" @click="handleReaderSurfaceClick">
           <RouterView v-slot="{ Component, route: _route }">
             <KeepAlive>
               <component :is="Component" v-if="_route.meta.keepAlive" :key="_route.path" />
@@ -145,6 +152,44 @@ const navs = [
   { icon: 'codicon-extensions', path: '/rules', title: '规则' }
 ];
 const navsShow = ref(false);
+const readerTopBarVisible = ref(false);
+const pageContentRef = ref<HTMLElement>();
+let readerTopBarTimer: ReturnType<typeof setTimeout> | undefined;
+
+function hideReaderTopBar() {
+  if (readerTopBarTimer) clearTimeout(readerTopBarTimer);
+  readerTopBarVisible.value = false;
+}
+
+function handleReaderSurfaceClick(event: MouseEvent) {
+  if (route.path !== '/content' || (event.target as HTMLElement).closest('a, button, input, textarea')) return;
+
+  const bounds = pageContentRef.value?.getBoundingClientRect();
+  if (!bounds) return;
+  const inCenter =
+    event.clientX >= bounds.left + bounds.width / 3 &&
+    event.clientX <= bounds.right - bounds.width / 3 &&
+    event.clientY >= bounds.top + bounds.height / 3 &&
+    event.clientY <= bounds.bottom - bounds.height / 3;
+  if (!inCenter) return;
+
+  readerTopBarVisible.value = true;
+  if (readerTopBarTimer) clearTimeout(readerTopBarTimer);
+  readerTopBarTimer = setTimeout(() => {
+    readerTopBarVisible.value = false;
+  }, 3000);
+}
+
+watch(
+  () => route.path,
+  (path) => {
+    if (path !== '/content') hideReaderTopBar();
+  }
+);
+
+onUnmounted(() => {
+  if (readerTopBarTimer) clearTimeout(readerTopBarTimer);
+});
 
 function openSetting() {
   modal.confirm({
