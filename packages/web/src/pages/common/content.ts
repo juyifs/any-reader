@@ -5,7 +5,7 @@ import type { Ref } from 'vue';
 import { useEventListener } from '@vueuse/core';
 import PQueue from 'p-queue';
 import { debounce, kebabCase } from 'lodash-es';
-import { ContentType } from '@any-reader/rule-utils';
+import { ContentType, type ContentResponse } from '@any-reader/rule-utils';
 import { getContent } from '@/api';
 import { saveChapterHistory } from '@/api/modules/chapter-history';
 import { contentDecoder } from '@/api/modules/rule-manager';
@@ -16,6 +16,61 @@ import { useKeyboardShortcuts } from '@/hooks/useMagicKeys';
 import { TTS } from '@/utils/tts';
 import { base64 } from '@/api/modules/tts';
 import { executeCommand } from '@/api/modules/vsc';
+
+const chapterContentCache = new Map<string, Promise<ContentResponse>>();
+const MAX_CACHED_CHAPTERS = 3;
+
+function getChapterCacheKey(params: Record<string, any>, chapterPath: string) {
+  return JSON.stringify([params.ruleId || '', params.filePath || '', chapterPath]);
+}
+
+async function fetchChapterContent(params: Record<string, any>, ruleId: string): Promise<ContentResponse> {
+  const response = await getContent(params);
+  if (response?.code !== 0) {
+    throw new Error(response?.msg || '获取章节内容失败');
+  }
+
+  const chapter = response.data;
+  if (!chapter.contentDecoder) return chapter;
+
+  const decodedContent = new Array<string>(chapter.content.length).fill('');
+  const tasks = new PQueue({ concurrency: 4 });
+  await Promise.all(
+    chapter.content.map((item, index) =>
+      tasks.add(async () => {
+        const result = await contentDecoder({ content: item, ruleId });
+        if (result?.code === 0) decodedContent[index] = result.data;
+      })
+    )
+  );
+
+  return {
+    ...chapter,
+    content: decodedContent,
+    contentDecoder: false
+  };
+}
+
+function cacheChapterContent(key: string, params: Record<string, any>, ruleId: string) {
+  const existing = chapterContentCache.get(key);
+  if (existing) {
+    chapterContentCache.delete(key);
+    chapterContentCache.set(key, existing);
+    return existing;
+  }
+
+  const request = fetchChapterContent(params, ruleId).catch((error) => {
+    if (chapterContentCache.get(key) === request) chapterContentCache.delete(key);
+    throw error;
+  });
+  chapterContentCache.set(key, request);
+  while (chapterContentCache.size > MAX_CACHED_CHAPTERS) {
+    const oldestKey = chapterContentCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    chapterContentCache.delete(oldestKey);
+  }
+  return request;
+}
 
 /**
  * 保存阅读历史记录的Hook
@@ -90,14 +145,12 @@ export function useContent(contentRef: Ref<HTMLElement>) {
   const readStore = useReadStore();
   const options = computed(() => route.query);
   const loading = ref(false);
-  let contentDecoderTasks: PQueue | undefined;
   const _onUnmounted: (() => void)[] = [];
   _onUnmounted.push(() => {
     readStore.setPath('');
     readStore.setTitle('');
     readStore.setPreTitle('');
     readStore.setNextTitle('');
-    if (contentDecoderTasks) contentDecoderTasks.clear();
   });
   onUnmounted(() => {
     _onUnmounted.forEach((fn) => fn());
@@ -234,14 +287,11 @@ export function useContent(contentRef: Ref<HTMLElement>) {
    * 预加载章节内容
    */
   function preload(chapterPath: string) {
-    const key = 'preload@' + chapterPath;
-    if (!sessionStorage.getItem(key)) {
-      sessionStorage.setItem(key, '1');
-      getContent({
-        ...route.query,
-        chapterPath
-      });
-    }
+    const params = { ...route.query, chapterPath };
+    const key = getChapterCacheKey(params, chapterPath);
+    cacheChapterContent(key, params, String(route.query.ruleId || '')).catch((error) => {
+      console.error('章节预加载失败', error);
+    });
   }
 
   /**
@@ -263,10 +313,19 @@ export function useContent(contentRef: Ref<HTMLElement>) {
       contentRef.value.scrollLeft = 0;
     }
     loading.value = true;
-    const res = await getContent({
-      ...route.query,
-      noCache
-    }).catch(() => {});
+    const params = { ...route.query, chapterPath: _chapterPath };
+    const cacheKey = getChapterCacheKey(params, String(_chapterPath || ''));
+    let chapter: ContentResponse | undefined;
+    try {
+      if (noCache) {
+        chapterContentCache.delete(cacheKey);
+        chapter = await cacheChapterContent(cacheKey, { ...params, noCache: true }, String(ruleId || ''));
+      } else {
+        chapter = await cacheChapterContent(cacheKey, params, String(ruleId || ''));
+      }
+    } catch {
+      chapter = undefined;
+    }
     loading.value = false;
     chapterPath.value = _chapterPath as string;
     chaptersStore.getChapters(filePath as string, ruleId as string).then(() => {
@@ -283,33 +342,10 @@ export function useContent(contentRef: Ref<HTMLElement>) {
         preload(nextChapter.value);
       }
     });
-    if (res?.code === 0) {
-      const { contentType: _contentType, content: _content, contentDecoder: _contentDecoder } = res.data;
+    if (chapter) {
+      const { contentType: _contentType, content: _content } = chapter;
       contentType.value = _contentType;
-      // 处理正文解密
-      if (_contentDecoder) {
-        if (contentDecoderTasks) {
-          contentDecoderTasks.clear();
-        } else {
-          contentDecoderTasks = new PQueue({ concurrency: 4 });
-        }
-        content.value = new Array(_content.length).fill('');
-        _content.forEach((url, i) => {
-          contentDecoderTasks?.add(async () => {
-            const res = await contentDecoder({
-              content: url,
-              ruleId: ruleId
-            });
-            if (res?.code === 0) {
-              content.value[i] = res.data;
-            }
-          });
-        });
-        // 等待所有内容解密完成
-        await contentDecoderTasks.onIdle();
-      } else {
-        content.value = _content || [];
-      }
+      content.value = _content || [];
     }
 
     // 确保内容已经渲染完成后再设置滚动位置
