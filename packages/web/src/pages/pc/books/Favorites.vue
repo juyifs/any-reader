@@ -32,16 +32,26 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
-.node:hover {
+.star {
+  visibility: visible;
+}
+
+@media (hover: hover) and (pointer: fine) {
   .star {
-    visibility: visible;
-    &:hover {
-      background: rgba(0, 0, 0, 1);
-    }
+    visibility: hidden;
   }
 
-  .cover {
-    transform: scale(1.2);
+  .node:hover {
+    .star {
+      visibility: visible;
+      &:hover {
+        background: rgba(0, 0, 0, 1);
+      }
+    }
+
+    .cover {
+      transform: scale(1.2);
+    }
   }
 }
 </style>

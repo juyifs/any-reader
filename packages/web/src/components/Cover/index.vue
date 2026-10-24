@@ -21,7 +21,9 @@ const props = withDefaults(
   transition: all ease 0.15s;
 }
 
-.ar-cover:hover {
-  transform: scale(1.2);
+@media (hover: hover) and (pointer: fine) {
+  .ar-cover:hover {
+    transform: scale(1.2);
+  }
 }
 </style>
