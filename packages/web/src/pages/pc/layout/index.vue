@@ -1,7 +1,10 @@
 <template>
   <BaseLayout>
     <div class="relative h-full w-full flex flex-col overflow-hidden text-[--ar-color-text]">
-      <TopContainer>
+      <TopContainer
+        v-if="route.path !== '/content' || readerTopBarVisible"
+        :class="route.path === '/content' ? 'absolute left-0 right-0 top-0 z-20 shadow-md' : ''"
+      >
         <div class="topbar__left w-20%" />
         <div class="w-60% flex flex-1 items-center justify-center gap-4">
           <span
