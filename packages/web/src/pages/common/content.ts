@@ -18,6 +18,7 @@ import { base64 } from '@/api/modules/tts';
 import { executeCommand } from '@/api/modules/vsc';
 import { IS_BROWSER } from '@/constants';
 import { getImageProxyUrl } from '@/utils/imageProxy';
+import { filterNovelContent } from '@/utils/contentFilter';
 
 const chapterContentCache = new Map<string, Promise<ContentResponse>>();
 const MAX_CACHED_CHAPTERS = 3;
@@ -140,6 +141,11 @@ export function useTheme(contentRef: Ref<HTMLElement>) {
 export function useContent(contentRef: Ref<HTMLElement>) {
   const content = ref<string[]>([]);
   const contentType = ref<ContentType | undefined>(ContentType.NOVEL);
+  const displayContent = computed(() =>
+    contentType.value === ContentType.NOVEL || contentType.value === ContentType.NOVELMORE
+      ? filterNovelContent(content.value, settingStore.data.contentFilters)
+      : content.value
+  );
   const route = useRoute();
   const router = useRouter();
   const chaptersStore = useChaptersStore();
@@ -478,6 +484,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     init,
     settingStore,
     content,
+    displayContent,
     contentType,
     toChapter,
     lastChapter,

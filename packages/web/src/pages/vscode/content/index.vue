@@ -19,7 +19,7 @@
         <img v-for="(row, idx) in content" :key="idx" class="center-row" :data-idx="idx" :src="row" />
       </template>
       <template v-else>
-        <div v-for="(row, idx) in content" :key="idx" class="center-row" :data-idx="idx" v-html="row"></div>
+        <div v-for="(row, idx) in displayContent" :key="idx" class="center-row" :data-idx="idx" v-html="row"></div>
       </template>
 
       <div class="my-10 flex justify-center">
@@ -116,8 +116,20 @@ const readStore = useReadStore();
 const chaptersStore = useChaptersStore();
 const route = useRoute();
 
-const { content, contentType, settingStore, lastChapter, nextChapter, onPageUp, onPageDown, onPrevChapter, onNextChapter, loading, init } =
-  useContent(contentRef);
+const {
+  content,
+  displayContent,
+  contentType,
+  settingStore,
+  lastChapter,
+  nextChapter,
+  onPageUp,
+  onPageDown,
+  onPrevChapter,
+  onNextChapter,
+  loading,
+  init
+} = useContent(contentRef);
 
 useTheme(contentRef);
 

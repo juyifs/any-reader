@@ -28,7 +28,7 @@
             <!-- 小说 -->
             <template v-else>
               <div
-                v-for="(row, idx) in content"
+                v-for="(row, idx) in displayContent"
                 :key="idx"
                 class="center-row transition-300 transition-color ease"
                 :data-idx="idx"
@@ -208,8 +208,21 @@ const isStarred = computed(() => favoritesStore.starred(favoriteRow.value));
 
 onClickOutside(chaptersRef, () => (chaptersVisible.value = false));
 
-const { settingStore, content, contentType, toChapter, lastChapter, nextChapter, onPrevChapter, onNextChapter, onPageUp, onPageDown, loading, init } =
-  useContent(contentRef);
+const {
+  settingStore,
+  content,
+  displayContent,
+  contentType,
+  toChapter,
+  lastChapter,
+  nextChapter,
+  onPrevChapter,
+  onNextChapter,
+  onPageUp,
+  onPageDown,
+  loading,
+  init
+} = useContent(contentRef);
 const pageTurnMode = computed(() =>
   contentType.value === ContentType.MANGA ? settingStore.data.mangaPageTurnMode : settingStore.data.novelPageTurnMode
 );

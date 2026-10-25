@@ -43,6 +43,7 @@ export type Setting = {
   autoNextChapter: boolean;
   novelPageTurnMode: PageTurnMode;
   mangaPageTurnMode: PageTurnMode;
+  contentFilters: string[];
   sidebar: Sidebar;
   bookDir: string;
   theme: ThemeToken | null;
@@ -70,6 +71,7 @@ export const useSettingStore = defineStore('setting', () => {
     autoNextChapter: true,
     novelPageTurnMode: 'scroll',
     mangaPageTurnMode: 'scroll',
+    contentFilters: [],
     sidebar: 'left',
     bookDir: '',
     theme: null

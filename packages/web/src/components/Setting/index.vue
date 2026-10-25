@@ -23,11 +23,13 @@
 <script setup>
 import ReadPage from './components/ReadPage/index.vue';
 import KeyboardShortcuts from './components/KeyboardShortcuts/index.vue';
+import ContentFilters from './components/ContentFilters/index.vue';
 import App from './components/App/index.vue';
 import About from './components/About/index.vue';
 
 const navs = [
   { title: '阅读页', component: ReadPage },
+  { title: '过滤标签', component: ContentFilters },
   { title: '热键', component: KeyboardShortcuts },
   { title: '应用', component: App },
   { title: '关于', component: About }
