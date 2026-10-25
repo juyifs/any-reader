@@ -222,7 +222,7 @@ Content-Type: application/json
 
 这类规则通常用来从`列表规则`的结果获取具体的某项内容，
 
-> 图片字段可以使用 `@headers` 携带请求头 (目前仅桌面端支持)
+> 图片字段可以使用 `@headers` 携带请求头（桌面端和网页端支持）。网页端通过服务端代理带 `@headers` 的图片及 HTTP 图片，以支持防盗链和 HTTPS 页面中的 HTTP 图片；需要部署可用的 Any Reader 服务端。
 >
 > 比如: `https://xxx.jpg@headers{"xxx":"xxx"}`
 

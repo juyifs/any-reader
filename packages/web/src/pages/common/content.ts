@@ -16,6 +16,8 @@ import { useKeyboardShortcuts } from '@/hooks/useMagicKeys';
 import { TTS } from '@/utils/tts';
 import { base64 } from '@/api/modules/tts';
 import { executeCommand } from '@/api/modules/vsc';
+import { IS_BROWSER } from '@/constants';
+import { getImageProxyUrl } from '@/utils/imageProxy';
 
 const chapterContentCache = new Map<string, Promise<ContentResponse>>();
 const MAX_CACHED_CHAPTERS = 3;
@@ -345,7 +347,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     if (chapter) {
       const { contentType: _contentType, content: _content } = chapter;
       contentType.value = _contentType;
-      content.value = _content || [];
+      content.value = (IS_BROWSER && _contentType === ContentType.MANGA ? (_content || []).map(getImageProxyUrl) : _content) || [];
     }
 
     // 确保内容已经渲染完成后再设置滚动位置
