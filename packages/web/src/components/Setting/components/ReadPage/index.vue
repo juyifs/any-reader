@@ -46,15 +46,6 @@
     <SettingRow title="滚动到底部自动下一章">
       <a-switch v-model:checked="settingStore.data.autoNextChapter" />
     </SettingRow>
-    <SettingRow title="TTS 接口地址">
-      <a-input v-model:value="settingStore.data.tts.endpoint" class="!w-260px" placeholder="留空使用内置 Edge TTS" />
-    </SettingRow>
-    <SettingRow title="TTS Token">
-      <a-input-password v-model:value="settingStore.data.tts.token" class="!w-260px" placeholder="可选" />
-    </SettingRow>
-    <SettingRow title="TTS 声音 ID">
-      <a-input v-model:value="settingStore.data.tts.voice" class="!w-260px" placeholder="zh-CN-XiaoxiaoNeural" />
-    </SettingRow>
     <SettingRow title="文字颜色">
       <input v-model="settingStore.data.readStyle.textColor" type="color" style="border: solid 1px rgba(0, 0, 0, 0.1)" />
     </SettingRow>

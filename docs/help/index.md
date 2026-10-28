@@ -101,4 +101,4 @@ windows: `C:\Users\%USERNAME%\.any-reader\`
 
 设置热键后, 阅读页面按热键既可, 朗读状态下再按一次暂停。
 
-若要使用 ms-ra-forwarder，在 `设置` -> `阅读页` 填写完整的 TTS 接口地址（例如 `https://your-domain/api/text-to-speech`），按需填写 Token 和声音 ID。接口地址留空时使用 AnyReader 内置的 Edge TTS。
+若要使用 ms-ra-forwarder，在 `设置` -> `朗读` 填写完整的 TTS 接口地址（例如 `https://your-domain/api/text-to-speech`），按需填写 Token、声音 ID、音量、语速和音调。音量、语速或音调留空时使用 TTS 服务的默认值；接口地址留空时使用 AnyReader 内置的 Edge TTS。

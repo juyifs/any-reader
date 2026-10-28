@@ -8,6 +8,9 @@ interface TTSSettings {
   endpoint?: string;
   token?: string;
   voice?: string;
+  volume?: number | null;
+  rate?: number | null;
+  pitch?: number | null;
 }
 
 @Controller('/tts')
@@ -20,7 +23,10 @@ export class TTS extends BaseController {
         JSON.stringify({
           text,
           endpoint: settings.endpoint,
-          voice: settings.voice
+          voice: settings.voice,
+          volume: settings.volume,
+          rate: settings.rate,
+          pitch: settings.pitch
         })
       )}`;
     }
@@ -35,9 +41,17 @@ export class TTS extends BaseController {
 
       url.searchParams.set('text', text);
       url.searchParams.set('voice', settings?.voice?.trim() || 'zh-CN-XiaoxiaoNeural');
-      url.searchParams.set('volume', '100');
-      url.searchParams.set('rate', '0');
-      url.searchParams.set('pitch', '0');
+      for (const [paramName, value] of Object.entries({
+        volume: settings?.volume,
+        rate: settings?.rate,
+        pitch: settings?.pitch
+      })) {
+        if (value === undefined || value === null) continue;
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < -100 || value > 100) {
+          throw new Error(`TTS ${paramName} 必须是 -100 到 100 之间的数字`);
+        }
+        url.searchParams.set(paramName, String(value));
+      }
 
       const headers = new Headers();
       const token = settings?.token?.trim();

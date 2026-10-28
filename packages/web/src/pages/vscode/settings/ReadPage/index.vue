@@ -55,31 +55,6 @@
     <SettingRow title="滚动到底部自动下一章">
       <input v-model="settingStore.data.autoNextChapter" type="checkbox" />
     </SettingRow>
-    <SettingRow title="TTS 接口地址">
-      <vscode-text-field
-        :value="settingStore.data.tts.endpoint"
-        class="w-full"
-        placeholder="留空使用内置 Edge TTS"
-        @input="(event) => (settingStore.data.tts.endpoint = event.target.value)"
-      />
-    </SettingRow>
-    <SettingRow title="TTS Token">
-      <vscode-text-field
-        :value="settingStore.data.tts.token"
-        class="w-full"
-        type="password"
-        placeholder="可选"
-        @input="(event) => (settingStore.data.tts.token = event.target.value)"
-      />
-    </SettingRow>
-    <SettingRow title="TTS 声音 ID">
-      <vscode-text-field
-        :value="settingStore.data.tts.voice"
-        class="w-full"
-        placeholder="zh-CN-XiaoxiaoNeural"
-        @input="(event) => (settingStore.data.tts.voice = event.target.value)"
-      />
-    </SettingRow>
     <SettingRow title="文字颜色">
       <div class="flex items-center">
         <input v-model="settingStore.data.readStyle.textColor" type="color" style="border: solid 1px rgba(0, 0, 0, 0.1)" />

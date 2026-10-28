@@ -2,6 +2,7 @@
   <div>
     <KeyboardShortcuts />
     <ReadPage />
+    <TTS />
     <ContentFilters />
     <SettingRow title="本地书籍目录">
       <vscode-text-field :value="settingStore.data.bookDir" class="w-full" @input="(event) => (settingStore.data.bookDir = event.target.value)">
@@ -19,6 +20,7 @@ import { useSettingStore } from '@/stores/setting';
 import * as cacheApi from '@/api/modules/cache';
 import KeyboardShortcuts from './KeyboardShortcuts/index.vue';
 import ReadPage from './ReadPage/index.vue';
+import TTS from './TTS/index.vue';
 import ContentFilters from './ContentFilters/index.vue';
 import SettingRow from './SettingRow/index.vue';
 

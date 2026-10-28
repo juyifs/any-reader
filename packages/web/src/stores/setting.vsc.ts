@@ -34,6 +34,9 @@ export type TTSSettings = {
   endpoint: string;
   token: string;
   voice: string;
+  volume: number | null;
+  rate: number | null;
+  pitch: number | null;
 };
 
 export type Setting = {
@@ -74,7 +77,10 @@ export const useSettingStore = defineStore('setting', () => {
     tts: {
       endpoint: '',
       token: '',
-      voice: 'zh-CN-XiaoxiaoNeural'
+      voice: 'zh-CN-XiaoxiaoNeural',
+      volume: null,
+      rate: null,
+      pitch: null
     },
     bookDir: '',
     theme: null
