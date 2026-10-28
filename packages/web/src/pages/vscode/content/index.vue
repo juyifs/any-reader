@@ -93,6 +93,17 @@
         ></div>
         <div class="codicon codicon-arrow-up vsc-toolbar-btn" title="上一屏" @click="onPageUp"></div>
         <div class="codicon codicon-arrow-down vsc-toolbar-btn" title="下一屏" @click="onPageDown"></div>
+        <div
+          class="codicon vsc-toolbar-btn"
+          :class="ttsStatus ? 'codicon-debug-stop' : 'codicon-play'"
+          :title="ttsStatus ? '停止朗读' : '开始朗读'"
+          :aria-label="ttsStatus ? '停止朗读' : '开始朗读'"
+          role="button"
+          tabindex="0"
+          @click="ttsStatus ? stopTTS() : toggleTTS()"
+          @keydown.enter.prevent="toggleTTS"
+          @keydown.space.prevent="toggleTTS"
+        ></div>
       </div>
     </div>
   </div>
@@ -127,6 +138,9 @@ const {
   onPageDown,
   onPrevChapter,
   onNextChapter,
+  ttsStatus,
+  toggleTTS,
+  stopTTS,
   loading,
   init
 } = useContent(contentRef);

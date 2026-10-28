@@ -44,7 +44,10 @@ export class TTS {
 
   // 销毁
   destroy() {
+    const row = this.speakData[this.idx - 1];
+    row?.node.classList.remove('color-red');
     this.idx = -1;
+    this.audioEl.pause();
     this.audioEl.removeEventListener('ended', this._ended);
     this.audioEl.parentElement?.removeChild(this.audioEl);
   }

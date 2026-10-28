@@ -33,6 +33,12 @@ export type KeyboardShortcuts = {
   tts: string;
 };
 
+export type TTSSettings = {
+  endpoint: string;
+  token: string;
+  voice: string;
+};
+
 // 侧边栏
 export type Sidebar = 'left' | 'right' | 'hidden' | '';
 export type PageTurnMode = 'scroll' | 'tap';
@@ -44,6 +50,7 @@ export type Setting = {
   novelPageTurnMode: PageTurnMode;
   mangaPageTurnMode: PageTurnMode;
   contentFilters: string[];
+  tts: TTSSettings;
   sidebar: Sidebar;
   bookDir: string;
   theme: ThemeToken | null;
@@ -72,6 +79,11 @@ export const useSettingStore = defineStore('setting', () => {
     novelPageTurnMode: 'scroll',
     mangaPageTurnMode: 'scroll',
     contentFilters: [],
+    tts: {
+      endpoint: '',
+      token: '',
+      voice: 'zh-CN-XiaoxiaoNeural'
+    },
     sidebar: 'left',
     bookDir: '',
     theme: null

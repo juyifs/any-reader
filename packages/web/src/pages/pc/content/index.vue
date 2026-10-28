@@ -75,6 +75,11 @@
               <SettingOutlined />
               设置
             </a-button>
+            <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" @click="ttsStatus ? stopTTS() : toggleTTS()">
+              <StopOutlined v-if="ttsStatus" />
+              <PlayCircleOutlined v-else />
+              {{ ttsStatus ? '停止朗读' : '开始朗读' }}
+            </a-button>
             <a-button
               type="text"
               :style="{ color: settingStore.data.readStyle.textColor }"
@@ -119,6 +124,11 @@
           <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" @click="settingBox.emit">
             <SettingOutlined />
             设置
+          </a-button>
+          <a-button type="text" :style="{ color: settingStore.data.readStyle.textColor }" @click="ttsStatus ? stopTTS() : toggleTTS()">
+            <StopOutlined v-if="ttsStatus" />
+            <PlayCircleOutlined v-else />
+            {{ ttsStatus ? '停止朗读' : '开始朗读' }}
           </a-button>
           <a-button
             type="text"
@@ -175,7 +185,7 @@
 
 <script setup lang="ts">
 import { ContentType } from '@any-reader/rule-utils';
-import { SettingOutlined, StarFilled, StarOutlined } from '@ant-design/icons-vue';
+import { PlayCircleOutlined, SettingOutlined, StarFilled, StarOutlined, StopOutlined } from '@ant-design/icons-vue';
 import { onClickOutside, useResizeObserver } from '@vueuse/core';
 import { useChaptersStore } from '@/stores/chapters';
 import { useFavoritesStore } from '@/stores/favorites';
@@ -218,6 +228,9 @@ const {
   nextChapter,
   onPrevChapter,
   onNextChapter,
+  ttsStatus,
+  toggleTTS,
+  stopTTS,
   onPageUp,
   onPageDown,
   loading,

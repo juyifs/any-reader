@@ -264,7 +264,16 @@ export function useContent(contentRef: Ref<HTMLElement>) {
 
   useSaveHistory(contentRef, options);
   const tts = useTTS(contentRef, onNextChapter);
-  let ttsStatus = false;
+  const ttsStatus = ref(false);
+
+  function toggleTTS() {
+    ttsStatus.value = tts.startOrStop();
+  }
+
+  function stopTTS() {
+    tts.destroy();
+    ttsStatus.value = false;
+  }
 
   const chapterPath = ref<string>('');
 
@@ -369,7 +378,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
       }
     }
 
-    if (ttsStatus) {
+    if (ttsStatus.value) {
       tts.start();
     }
   }
@@ -472,9 +481,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
         nextChapter: onNextChapter,
         pageUp: onPageUp,
         pageDown: onPageDown,
-        tts: () => {
-          ttsStatus = tts.startOrStop();
-        }
+        tts: toggleTTS
       };
       cmdMap[cmd] && cmdMap[cmd]();
     }
@@ -493,6 +500,9 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     onPageDown,
     onPrevChapter,
     onNextChapter,
+    ttsStatus,
+    toggleTTS,
+    stopTTS,
     loading
   };
 }
@@ -504,6 +514,7 @@ export function useTTS(contentRef: Ref<HTMLElement>, ended: () => void) {
   let tts: TTS | null;
 
   const route = useRoute();
+  const settingStore = useSettingStore();
 
   /**
    * 销毁TTS实例
@@ -532,7 +543,7 @@ export function useTTS(contentRef: Ref<HTMLElement>, ended: () => void) {
     tts = new TTS(
       contentRef.value,
       (text: string) => {
-        return base64({ text }).then((e) => e.data);
+        return base64({ text, settings: { ...settingStore.data.tts } }).then((e) => e.data);
       },
       ended
     );
@@ -540,6 +551,7 @@ export function useTTS(contentRef: Ref<HTMLElement>, ended: () => void) {
 
   return {
     start,
+    destroy,
     startOrStop() {
       if (!tts) {
         start();
