@@ -4,7 +4,10 @@ const BLOCK_SELECTOR = 'p, li, blockquote, h1, h2, h3, h4, h5, h6, div, section,
 export function createContentFilter(pattern: string): RegExp {
   const value = pattern.trim();
   const slashDelimited = value.match(/^\/([\s\S]*)\/([dgimsuvy]*)$/);
-  return slashDelimited ? new RegExp(slashDelimited[1], slashDelimited[2]) : new RegExp(value, 'i');
+  if (slashDelimited) return new RegExp(slashDelimited[1], slashDelimited[2]);
+
+  const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(escapedValue, 'i');
 }
 
 export function getContentFilterError(pattern: string): string {
