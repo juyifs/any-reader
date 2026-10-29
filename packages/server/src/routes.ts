@@ -44,8 +44,9 @@ export function createRoute(api: App) {
       return;
     }
     const { password } = ctx.request.body;
+    const storedPassword = /^[a-f\d]{32}$/i.test(password) ? bcrypt.hashSync(password, 10) : password;
     api.updateConfig({
-      password
+      password: storedPassword
     });
     ctx.session!.uid = 1;
     ctx.body = {
