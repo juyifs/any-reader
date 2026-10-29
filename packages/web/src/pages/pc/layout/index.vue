@@ -167,9 +167,12 @@ const pageContentRef = ref<HTMLElement>();
 let readerTopBarTimer: ReturnType<typeof setTimeout> | undefined;
 
 const currentChapterLabel = computed(() => {
+  const title = readStore.title.trim();
+  if (/^第\s*[0-9零〇一二两三四五六七八九十百千万亿廿卅]+\s*[章节回卷]/.test(title)) return title;
+
   const chapterIndex = chaptersStore.chapters.findIndex((chapter) => chapter.chapterPath === readStore.path);
-  if (chapterIndex < 0) return readStore.title || 'any-reader';
-  return `第${chapterIndex + 1}章 ${readStore.title}`;
+  if (chapterIndex < 0) return title || 'any-reader';
+  return `第${chapterIndex + 1}章 ${title}`;
 });
 
 function hideReaderTopBar() {
