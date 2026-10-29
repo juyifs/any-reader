@@ -12,6 +12,7 @@ export class TTS {
   private idx = -1;
   private audioEl!: HTMLMediaElement;
   private _ended: () => void;
+  private isFirstItem = true;
   container: HTMLElement;
   private _onEnd: () => void;
 
@@ -23,8 +24,7 @@ export class TTS {
     this.speakData = [];
     this.container = typeof selector === 'string' ? (document.querySelector(selector) as HTMLElement) : selector;
     this.parseNodes(this.container);
-    // this.idx = this.speakData.length - 2;
-    this.idx = 0;
+    this.idx = this.findCurrentPageStart();
     this.getTTS(this.idx);
     this.start();
   }
@@ -98,6 +98,22 @@ export class TTS {
     }
   }
 
+  private findCurrentPageStart() {
+    const containerBounds = this.container.getBoundingClientRect();
+    const isPaged = this.container.classList.contains('reader-paged-container');
+    const currentIndex = this.speakData.findIndex(({ node }) =>
+      Array.from(node.getClientRects()).some((rect) =>
+        isPaged
+          ? rect.right > containerBounds.left &&
+            rect.left < containerBounds.right &&
+            rect.bottom > containerBounds.top &&
+            rect.top < containerBounds.bottom
+          : rect.bottom > containerBounds.top && rect.top < containerBounds.bottom
+      )
+    );
+    return currentIndex < 0 ? 0 : currentIndex;
+  }
+
   async getTTS(idx: number) {
     if (idx > this.idx + 5) {
       setTimeout(() => {
@@ -137,9 +153,33 @@ export class TTS {
     if (this.audioEl.paused) {
       this.audioEl.play();
     }
-    this.container.scrollTo({
-      top: row.node.offsetTop - this.container.getBoundingClientRect().height / 2,
-      behavior: 'smooth'
-    });
+    this.followReadingPosition(row.node);
+  }
+
+  private followReadingPosition(node: HTMLElement) {
+    if (this.isFirstItem) {
+      this.isFirstItem = false;
+      return;
+    }
+
+    const containerBounds = this.container.getBoundingClientRect();
+    const nodeBounds = node.getBoundingClientRect();
+
+    if (this.container.classList.contains('reader-paged-container')) {
+      if (nodeBounds.left >= containerBounds.right) {
+        this.container.scrollBy({
+          left: this.container.clientWidth,
+          behavior: 'smooth'
+        });
+      }
+      return;
+    }
+
+    if (nodeBounds.bottom > containerBounds.bottom - 16) {
+      this.container.scrollBy({
+        top: Math.max(1, this.container.clientHeight - 30),
+        behavior: 'smooth'
+      });
+    }
   }
 }
