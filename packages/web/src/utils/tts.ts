@@ -4,6 +4,7 @@ interface SpeakItem {
   node: HTMLElement;
   text: string;
   base64?: string;
+  audio?: Promise<string>;
 }
 
 export class TTS {
@@ -13,6 +14,7 @@ export class TTS {
   private audioEl!: HTMLMediaElement;
   private _ended: () => void;
   private isFirstItem = true;
+  private destroyed = false;
   container: HTMLElement;
   private _onEnd: () => void;
 
@@ -38,6 +40,9 @@ export class TTS {
       document.body.append(el);
     }
     el.autoplay = true;
+    el.preload = 'auto';
+    el.setAttribute('playsinline', '');
+    el.setAttribute('webkit-playsinline', '');
     this.audioEl = el;
     this.audioEl.addEventListener('ended', this._ended);
   }
@@ -46,15 +51,17 @@ export class TTS {
   destroy() {
     const row = this.speakData[this.idx - 1];
     row?.node.classList.remove('color-red');
+    this.destroyed = true;
     this.idx = -1;
     this.audioEl.pause();
     this.audioEl.removeEventListener('ended', this._ended);
-    this.audioEl.parentElement?.removeChild(this.audioEl);
   }
 
   startOrStop() {
     if (this.audioEl.paused) {
-      this.audioEl.play();
+      this.audioEl.play().catch((error) => {
+        console.error('朗读音频播放失败', error);
+      });
     } else {
       this.audioEl.pause();
     }
@@ -114,46 +121,55 @@ export class TTS {
     return currentIndex < 0 ? 0 : currentIndex;
   }
 
-  async getTTS(idx: number) {
-    if (idx > this.idx + 5) {
-      setTimeout(() => {
-        this.getTTS(idx);
-      }, 1000);
-      return;
-    }
+  getTTS(idx: number): Promise<string> | undefined {
+    if (idx >= this.speakData.length || idx > this.idx + 5 || this.destroyed) return;
 
-    if (idx < this.speakData.length) {
-      const row = this.speakData[idx];
-      row.base64 = await this.speakText(row.text);
-      this.getTTS(idx + 1);
-    }
+    const row = this.speakData[idx];
+    row.audio ||= this.speakText(row.text).then((base64) => {
+      row.base64 = base64;
+      return base64;
+    });
+    void row.audio
+      .then(() => {
+        this.getTTS(idx + 1);
+      })
+      .catch((error) => {
+        console.error('朗读音频获取失败', error);
+      });
+    return row.audio;
   }
 
-  start() {
+  async start() {
     const row = this.speakData[this.idx];
     if (!row) {
-      this._onEnd();
+      if (!this.destroyed) this._onEnd();
       return;
     }
 
-    const { base64 } = row;
-    if (typeof base64 === 'undefined') {
-      setTimeout(() => {
-        this.start();
-      }, 1000);
-      return;
-    }
+    const idx = this.idx;
     this.idx++;
     row.node.classList.add('color-red');
+
+    try {
+      const audio = row.audio || this.getTTS(idx);
+      if (!audio) return;
+      await audio;
+    } catch (error) {
+      return;
+    }
+
+    if (this.destroyed || this.idx !== idx + 1) return;
+
     if (!row.base64) {
       this.ended();
       return;
     }
     this.audioEl.src = ('data:audio/mp3;base64,' + row.base64) as string;
-    if (this.audioEl.paused) {
-      this.audioEl.play();
-    }
+    this.audioEl.play().catch((error) => {
+      console.error('朗读音频播放失败', error);
+    });
     this.followReadingPosition(row.node);
+    this.getTTS(this.idx + 5);
   }
 
   private followReadingPosition(node: HTMLElement) {

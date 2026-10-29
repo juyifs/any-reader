@@ -345,20 +345,19 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     }
     loading.value = false;
     chapterPath.value = _chapterPath as string;
-    chaptersStore.getChapters(filePath as string, ruleId as string).then(() => {
-      const chapterInfo = chaptersStore.chapters.find((e) => e.chapterPath === route.query.chapterPath);
-      readStore.setPath(chapterInfo?.chapterPath || '');
-      readStore.setTitle(chapterInfo?.name || '');
-      // 设置标题
-      executeCommand({ command: 'any-reader.setTitle', data: [readStore.title] });
+    await chaptersStore.getChapters(filePath as string, ruleId as string);
+    const chapterInfo = chaptersStore.chapters.find((e) => e.chapterPath === route.query.chapterPath);
+    readStore.setPath(chapterInfo?.chapterPath || '');
+    readStore.setTitle(chapterInfo?.name || '');
+    // 设置标题
+    executeCommand({ command: 'any-reader.setTitle', data: [readStore.title] });
 
-      if (lastChapter.value) {
-        preload(lastChapter.value);
-      }
-      if (nextChapter.value) {
-        preload(nextChapter.value);
-      }
-    });
+    if (lastChapter.value) {
+      preload(lastChapter.value);
+    }
+    if (nextChapter.value) {
+      preload(nextChapter.value);
+    }
     if (chapter) {
       const { contentType: _contentType, content: _content } = chapter;
       contentType.value = _contentType;
