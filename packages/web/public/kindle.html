@@ -12,7 +12,7 @@
         color: #111;
         background: #fff;
         font-family: SimHei, '黑体', Arial, sans-serif;
-        font-size: 22px;
+        font-size: 26px;
         line-height: 1.6;
       }
 
@@ -37,7 +37,7 @@
       }
 
       .toolbar {
-        padding: 8px 0;
+        padding: 10px 0;
         border-bottom: 1px solid #999;
       }
 
@@ -60,7 +60,7 @@
       .access-box button {
         display: inline-block;
         margin: 2px 4px 2px 0;
-        padding: 7px 10px;
+        padding: 9px 12px;
         color: #111;
         background: #fff;
         border: 1px solid #555;
@@ -97,8 +97,8 @@
         display: block;
         box-sizing: border-box;
         width: 100%;
-        min-height: 122px;
-        padding: 9px 4px;
+        min-height: 148px;
+        padding: 11px 5px;
         border-bottom: 1px solid #999;
       }
 
@@ -106,9 +106,9 @@
         float: left;
         display: block;
         box-sizing: border-box;
-        width: 76px;
-        height: 104px;
-        margin: 0 10px 4px 0;
+        width: 92px;
+        height: 126px;
+        margin: 0 12px 5px 0;
         border: 1px solid #888;
         background: #eee;
         object-fit: cover;
@@ -118,14 +118,14 @@
         float: left;
         display: block;
         box-sizing: border-box;
-        width: 76px;
-        height: 104px;
-        margin: 0 10px 4px 0;
-        padding: 30px 4px;
+        width: 92px;
+        height: 126px;
+        margin: 0 12px 5px 0;
+        padding: 38px 4px;
         border: 1px solid #888;
         background: #eee;
         text-align: center;
-        font-size: 16px;
+        font-size: 19px;
       }
 
       .book-details {
@@ -138,9 +138,9 @@
 
       .book button {
         margin-top: 4px;
-        padding: 5px 8px;
+        padding: 7px 10px;
         font: inherit;
-        font-size: 16px;
+        font-size: 19px;
       }
 
       #readerView {
@@ -165,7 +165,6 @@
         z-index: 20;
         top: 0;
         right: 0;
-        bottom: 0;
         left: 0;
         overflow: hidden;
         background: #fff;
@@ -175,11 +174,11 @@
         box-sizing: border-box;
         width: 100%;
         height: 100%;
-        padding: 28px 10px 24px;
+        padding: 32px 12px 84px;
         overflow-x: auto;
         overflow-y: hidden;
-        font-size: 28px;
-        line-height: 1.65;
+        font-size: 36px;
+        line-height: 1.6;
         overflow-wrap: break-word;
         white-space: pre-wrap;
         -webkit-column-width: 100vw;
@@ -205,7 +204,7 @@
         right: 8px;
         overflow: hidden;
         margin: 0;
-        font-size: 17px;
+        font-size: 20px;
         font-weight: normal;
         text-align: center;
         text-overflow: ellipsis;
@@ -215,10 +214,10 @@
       }
 
       .floating-toolbar {
-        position: fixed;
+        position: absolute;
         z-index: 30;
         right: 6px;
-        bottom: 8px;
+        bottom: 4px;
         left: 6px;
         padding: 2px;
         border: 1px solid #777;
@@ -233,15 +232,15 @@
       }
 
       .floating-toolbar button {
-        min-width: 42px;
-        margin: 3px;
-        padding: 7px 9px;
+        min-width: 50px;
+        margin: 4px;
+        padding: 9px 11px;
         color: #111;
         background: #fff;
         border: 1px solid #777;
         border-radius: 3px;
         font: inherit;
-        font-size: 18px;
+        font-size: 22px;
       }
 
       .floating-toolbar button:disabled {
@@ -264,7 +263,7 @@
       @media (max-width: 420px) {
         body {
           padding: 4px;
-          font-size: 20px;
+          font-size: 24px;
         }
 
         body.reading {
@@ -273,17 +272,17 @@
 
         .book {
           width: 100%;
-          min-height: 108px;
+          min-height: 132px;
         }
 
         .book-cover,
         .book-cover-placeholder {
-          width: 68px;
-          height: 92px;
+          width: 82px;
+          height: 112px;
         }
 
         .book-cover-placeholder {
-          padding-top: 25px;
+          padding-top: 34px;
         }
 
         .floating-toolbar {
@@ -347,7 +346,7 @@
         var selectedBook = null;
         var chapters = [];
         var chapterIndex = -1;
-        var readerFontSize = 24;
+        var readerFontSize = 36;
         var minimumReaderFontSize = 12;
         var maximumReaderFontSize = 56;
         var readerPageWidth = 0;
@@ -412,6 +411,13 @@
           readerPageWidth = Math.max(1, readerText.clientWidth - 20);
           readerText.style.webkitColumnWidth = readerPageWidth + 'px';
           readerText.style.columnWidth = readerPageWidth + 'px';
+        }
+
+        function updateReaderViewport() {
+          var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+          if (viewportHeight > 0) {
+            document.getElementById('readerView').style.height = viewportHeight + 'px';
+          }
         }
 
         function getScrollPercentage() {
@@ -775,6 +781,7 @@
           if (!chapter || !selectedBook) return;
           chapterIndex = index;
           showView('readerView');
+          updateReaderViewport();
           updateReaderLayout();
           document.getElementById('chapterTitle').textContent = chapter.name || '正文';
           readerText.textContent = '正在加载正文...';
@@ -1035,6 +1042,7 @@
         window.onresize = function () {
           if (currentView !== 'readerView') return;
           var percentage = getScrollPercentage();
+          updateReaderViewport();
           updateReaderLayout();
           restoreScrollPercentage(percentage);
         };
