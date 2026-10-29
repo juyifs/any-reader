@@ -192,8 +192,6 @@
 
       .reader-paragraph {
         margin: 0 0 0.85em;
-        break-inside: avoid;
-        -webkit-column-break-inside: avoid;
       }
 
       #chapterTitle {
@@ -439,9 +437,15 @@
         }
 
         function updateReaderViewport() {
-          var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+          var visualViewport = window.visualViewport;
+          var viewportHeight = visualViewport
+            ? visualViewport.height
+            : document.documentElement.clientHeight || window.innerHeight;
+          var viewportTop = visualViewport ? visualViewport.offsetTop : 0;
+          var readerView = document.getElementById('readerView');
           if (viewportHeight > 0) {
-            document.getElementById('readerView').style.height = viewportHeight + 'px';
+            readerView.style.top = viewportTop + 'px';
+            readerView.style.height = viewportHeight + 'px';
           }
         }
 
@@ -1066,13 +1070,19 @@
           if (x < width * 0.3) turnPage(-1);
           else if (x > width * 0.7) turnPage(1);
         };
-        window.onresize = function () {
+        function handleReaderViewportResize() {
           if (currentView !== 'readerView') return;
           var percentage = getScrollPercentage();
           updateReaderViewport();
           updateReaderLayout();
           restoreScrollPercentage(percentage);
-        };
+        }
+
+        window.addEventListener('resize', handleReaderViewportResize);
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener('resize', handleReaderViewportResize);
+          window.visualViewport.addEventListener('scroll', updateReaderViewport);
+        }
 
         showBookshelf();
       })();
