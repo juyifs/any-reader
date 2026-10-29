@@ -157,11 +157,18 @@
         right: 0;
         bottom: 0;
         left: 0;
+        height: 100%;
         overflow: hidden;
         padding: 0;
       }
 
       html.reading {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
         height: 100%;
         overflow: hidden;
       }
@@ -240,7 +247,7 @@
         position: fixed;
         z-index: 30;
         right: 6px;
-        bottom: 48px;
+        bottom: 4px;
         left: 6px;
         padding: 2px;
         border: 1px solid #777;
@@ -314,7 +321,7 @@
 
         .floating-toolbar {
           right: 3px;
-          bottom: 48px;
+          bottom: 4px;
           left: 3px;
         }
       }
@@ -477,7 +484,7 @@
           if (viewportHeight > 0) {
             readerView.style.top = viewportTop + 'px';
             readerView.style.height = viewportHeight + 'px';
-            readerToolbar.style.bottom = bottomInset + 48 + 'px';
+            readerToolbar.style.bottom = bottomInset + 4 + 'px';
           }
         }
 
