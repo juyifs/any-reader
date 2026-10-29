@@ -7,14 +7,13 @@
     <title>AnyReader Kindle 简洁版</title>
     <style>
       body {
-        margin: 0 auto;
-        padding: 16px;
-        max-width: 720px;
+        margin: 0;
+        padding: 6px;
         color: #111;
         background: #fff;
-        font-family: serif;
+        font-family: SimHei, '黑体', Arial, sans-serif;
         font-size: 18px;
-        line-height: 1.65;
+        line-height: 1.55;
       }
 
       h1,
@@ -23,12 +22,13 @@
       }
 
       h1 {
-        margin: 0 0 12px;
-        font-size: 1.35em;
+        margin: 0 0 8px;
+        font-size: 1.2em;
       }
 
       h2 {
-        font-size: 1.1em;
+        margin: 12px 0 6px;
+        font-size: 1em;
       }
 
       a {
@@ -36,26 +36,27 @@
         text-decoration: underline;
       }
 
-      .header,
-      .toolbar,
-      .book,
-      .chapter,
-      .access-box {
-        padding: 12px 0;
+      .toolbar {
+        padding: 6px 0;
         border-bottom: 1px solid #999;
       }
 
-      .header a {
-        display: inline-block;
-        margin-top: 6px;
+      #favoritesSection {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      #favoritesSection h2 {
+        margin: 0;
       }
 
       .toolbar a,
       .toolbar button,
       .access-box button {
         display: inline-block;
-        margin: 4px 8px 4px 0;
-        padding: 8px 10px;
+        margin: 2px 4px 2px 0;
+        padding: 5px 8px;
         color: #111;
         background: #fff;
         border: 1px solid #555;
@@ -67,16 +68,16 @@
       .book a,
       .chapter a {
         display: block;
-        padding: 8px 0;
+        padding: 3px 0;
       }
 
       .muted {
         color: #444;
-        font-size: 0.85em;
+        font-size: 0.8em;
       }
 
       .notice {
-        padding: 8px 0;
+        padding: 4px 0;
         color: #333;
       }
 
@@ -88,15 +89,164 @@
         display: none;
       }
 
+      .book {
+        display: inline-block;
+        vertical-align: top;
+        box-sizing: border-box;
+        width: 49%;
+        min-height: 108px;
+        padding: 6px 3px;
+        border-bottom: 1px solid #999;
+      }
+
+      .book-cover {
+        float: left;
+        display: block;
+        box-sizing: border-box;
+        width: 64px;
+        height: 88px;
+        margin: 0 8px 3px 0;
+        border: 1px solid #888;
+        background: #eee;
+        object-fit: cover;
+      }
+
+      .book-cover-placeholder {
+        float: left;
+        display: block;
+        box-sizing: border-box;
+        width: 64px;
+        height: 88px;
+        margin: 0 8px 3px 0;
+        padding: 22px 4px;
+        border: 1px solid #888;
+        background: #eee;
+        text-align: center;
+        font-size: 13px;
+      }
+
+      .book-details {
+        overflow: hidden;
+      }
+
+      .book-title {
+        font-weight: bold;
+      }
+
+      .book button {
+        margin-top: 4px;
+        padding: 3px 5px;
+        font: inherit;
+        font-size: 13px;
+      }
+
+      #readerView {
+        display: none;
+      }
+
+      #readerView:not(.hidden) {
+        display: block;
+      }
+
+      body.reading {
+        overflow: hidden;
+        padding: 0;
+      }
+
+      body.reading > #notice {
+        display: none;
+      }
+
+      #readerView:not(.hidden) {
+        position: fixed;
+        z-index: 20;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        overflow: hidden;
+        background: #fff;
+      }
+
       #readerText {
-        font-size: 20px;
-        line-height: 1.8;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        padding: 28px 10px 24px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        font-size: 24px;
+        line-height: 1.65;
         overflow-wrap: break-word;
         white-space: pre-wrap;
+        -webkit-column-width: 100vw;
+        -webkit-column-gap: 0;
+        -webkit-column-fill: auto;
+        column-width: 100vw;
+        column-gap: 0;
+        column-fill: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       .reader-paragraph {
-        margin: 0 0 1em;
+        margin: 0 0 0.85em;
+        break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+      }
+
+      #chapterTitle {
+        position: absolute;
+        z-index: 2;
+        top: 2px;
+        left: 8px;
+        right: 8px;
+        overflow: hidden;
+        margin: 0;
+        font-size: 14px;
+        font-weight: normal;
+        text-align: center;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      .floating-toolbar {
+        position: fixed;
+        z-index: 30;
+        right: 6px;
+        bottom: 8px;
+        left: 6px;
+        padding: 2px;
+        border: 1px solid #777;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.82);
+        text-align: center;
+        opacity: 0.72;
+      }
+
+      .floating-toolbar:active {
+        opacity: 0.95;
+      }
+
+      .floating-toolbar button {
+        min-width: 34px;
+        margin: 2px;
+        padding: 4px 6px;
+        color: #111;
+        background: #fff;
+        border: 1px solid #777;
+        border-radius: 3px;
+        font: inherit;
+        font-size: 15px;
+      }
+
+      .floating-toolbar button:disabled {
+        color: #888;
+      }
+
+      .reader-hint {
+        display: none;
       }
 
       input[type='password'] {
@@ -110,20 +260,39 @@
 
       @media (max-width: 420px) {
         body {
-          padding: 12px;
-          font-size: 17px;
+          padding: 4px;
+          font-size: 16px;
+        }
+
+        body.reading {
+          padding: 0;
+        }
+
+        .book {
+          width: 100%;
+          min-height: 84px;
+        }
+
+        .book-cover,
+        .book-cover-placeholder {
+          width: 56px;
+          height: 76px;
+        }
+
+        .book-cover-placeholder {
+          padding-top: 18px;
+        }
+
+        .floating-toolbar {
+          right: 3px;
+          bottom: 4px;
+          left: 3px;
         }
       }
     </style>
   </head>
   <body>
-    <div class="header">
-      <h1>AnyReader Kindle 简洁版</h1>
-      <div class="muted">适用于 Kindle 内置浏览器的简洁阅读页面</div>
-      <a href="/">打开完整网页</a>
-    </div>
-
-    <div id="notice" class="notice" role="status">正在加载书架...</div>
+    <div id="notice" class="notice" role="status"></div>
 
     <section id="accessView" class="hidden">
       <h2 id="accessTitle">登录</h2>
@@ -136,20 +305,6 @@
     </section>
 
     <section id="booksView">
-      <h2>在线搜索</h2>
-      <form id="searchForm" class="access-box">
-        <label for="searchRule">书源</label>
-        <select id="searchRule" style="display: block; box-sizing: border-box; width: 100%; margin: 8px 0; padding: 10px; font: inherit">
-          <option value="">正在加载书源...</option>
-        </select>
-        <label for="searchKeyword">书名或关键词</label>
-        <input id="searchKeyword" type="text" autocomplete="off" />
-        <button type="submit">搜索</button>
-      </form>
-      <div id="searchStatus" class="notice"></div>
-      <div id="searchResults"></div>
-      <h2>本地书架</h2>
-      <div id="booksList"></div>
       <div id="favoritesSection" class="toolbar">
         <h2>收藏书架</h2>
         <button id="refreshFavorites" type="button">刷新收藏</button>
@@ -162,54 +317,103 @@
       <div class="toolbar">
         <a id="backToBooks" href="#">返回书架</a>
         <a id="reloadChapters" href="#">刷新目录</a>
+        <span id="resumeRow" class="hidden">
+          <button id="resumeButton" type="button">继续阅读</button>
+        </span>
       </div>
       <h2 id="bookTitle"></h2>
-      <p id="resumeRow" class="hidden">
-        <a id="resumeLink" href="#">继续阅读</a>
-      </p>
       <div id="chaptersList"></div>
     </section>
 
     <section id="readerView" class="hidden">
-      <div class="toolbar">
-        <a id="backToChapters" href="#">返回目录</a>
-        <button id="previousChapter" type="button">上一章</button>
-        <button id="nextChapter" type="button">下一章</button>
-        <button id="smallerText" type="button" aria-label="缩小字号">A-</button>
-        <button id="largerText" type="button" aria-label="放大字号">A+</button>
-      </div>
       <h2 id="chapterTitle"></h2>
       <div id="readerText"></div>
-      <div class="toolbar">
-        <a id="backToChaptersBottom" href="#">返回目录</a>
-        <button id="previousChapterBottom" type="button">上一章</button>
-        <button id="nextChapterBottom" type="button">下一章</button>
+      <div id="readerToolbar" class="floating-toolbar">
+        <button id="previousPage" type="button" aria-label="上一页">‹</button>
+        <button id="backToChapters" type="button">目录</button>
+        <button id="smallerText" type="button" aria-label="缩小字号">A-</button>
+        <button id="largerText" type="button" aria-label="放大字号">A+</button>
+        <button id="nextPage" type="button" aria-label="下一页">›</button>
       </div>
+      <div class="reader-hint">点按屏幕左右两侧翻页</div>
     </section>
 
     <script>
       (function () {
         var currentView = 'booksView';
         var selectedBook = null;
-        var searchRules = [];
         var chapters = [];
         var chapterIndex = -1;
-        var readerFontSize = 20;
+        var readerFontSize = 24;
+        var minimumReaderFontSize = 12;
+        var maximumReaderFontSize = 56;
+        var readerPageWidth = 0;
+        var touchStartX = 0;
+        var ignoreNextReaderClick = false;
         var chapterRequestId = 0;
         var contentRequestId = 0;
-        var searchRequestId = 0;
         var favoritesRequestId = 0;
         var progressTimer = null;
         var accessMode = 'login';
         var viewIds = ['accessView', 'booksView', 'chaptersView', 'readerView'];
         var notice = document.getElementById('notice');
         var readerText = document.getElementById('readerText');
-        var searchStatus = document.getElementById('searchStatus');
         var favoritesStatus = document.getElementById('favoritesStatus');
 
         function setNotice(text, isError) {
           notice.className = isError ? 'notice error' : 'notice';
           notice.textContent = text || '';
+        }
+
+        function getCoverUrl(value) {
+          var cover = String(value || '');
+          var match = cover.match(/@headers?(.+)$/);
+          var headers = {};
+          var imageUrl = cover;
+          if (match) {
+            imageUrl = cover.slice(0, match.index);
+            try {
+              headers = JSON.parse(decodeURIComponent(match[1]));
+            } catch (error) {
+              headers = {};
+            }
+          }
+          if (!/^https?:\/\//i.test(imageUrl)) return imageUrl;
+          return '/image-proxy?url=' + encodeURIComponent(imageUrl) + '&headers=' + encodeURIComponent(JSON.stringify(headers));
+        }
+
+        function addBookCover(book, row) {
+          var cover;
+          var placeholder;
+          if (!book.cover) {
+            placeholder = document.createElement('span');
+            placeholder.className = 'book-cover-placeholder';
+            placeholder.textContent = '书籍';
+            row.appendChild(placeholder);
+            return;
+          }
+          cover = document.createElement('img');
+          cover.className = 'book-cover';
+          cover.alt = '';
+          cover.src = getCoverUrl(book.cover);
+          cover.onerror = function () {
+            var fallback = document.createElement('span');
+            fallback.className = 'book-cover-placeholder';
+            fallback.textContent = '书籍';
+            if (cover.parentNode) cover.parentNode.replaceChild(fallback, cover);
+          };
+          row.appendChild(cover);
+        }
+
+        function updateReaderLayout() {
+          readerPageWidth = Math.max(1, readerText.clientWidth - 20);
+          readerText.style.webkitColumnWidth = readerPageWidth + 'px';
+          readerText.style.columnWidth = readerPageWidth + 'px';
+        }
+
+        function getScrollPercentage() {
+          var scrollable = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
+          return scrollable > 0 ? Math.floor((readerText.scrollLeft / scrollable) * 100000) : 0;
         }
 
         function md5(value) {
@@ -294,6 +498,7 @@
           for (i = 0; i < viewIds.length; i++) {
             document.getElementById(viewIds[i]).className = viewIds[i] === id ? '' : 'hidden';
           }
+          document.body.className = id === 'readerView' ? 'reading' : '';
           currentView = id;
         }
 
@@ -346,29 +551,10 @@
           setNotice('', false);
         }
 
-        function loadBooks() {
+        function showFavorites() {
           showView('booksView');
-          setNotice('正在加载书架...', false);
-          loadSearchRules();
+          setNotice('', false);
           loadFavorites();
-          request('bookshelf/list', {}, function (error, data) {
-            var list = document.getElementById('booksList');
-            var i;
-            list.textContent = '';
-            if (error) {
-              setNotice(error.message, true);
-              return;
-            }
-            data = data || [];
-            if (!data.length) {
-              setNotice('书架为空。请在 AnyReader 设置中配置本地书籍目录并放入 TXT 或 EPUB 文件。', false);
-              return;
-            }
-            setNotice('', false);
-            for (i = 0; i < data.length; i++) {
-              addBook(data[i], list);
-            }
-          });
         }
 
         function loadFavorites() {
@@ -402,6 +588,7 @@
           var row = document.createElement('div');
           var link = document.createElement('a');
           var removeButton = document.createElement('button');
+          var details = document.createElement('div');
           link.href = '#';
           link.textContent = book.name || book.url || '未命名书籍';
           link.onclick = function () {
@@ -413,25 +600,29 @@
             return false;
           };
           row.className = 'book';
-          row.appendChild(link);
+          addBookCover(book, row);
+          details.className = 'book-details';
+          link.className = 'book-title';
+          details.appendChild(link);
           if (book.author) {
             var author = document.createElement('div');
             author.className = 'muted';
             author.textContent = '作者：' + book.author;
-            row.appendChild(author);
+            details.appendChild(author);
           }
           if (book.chapter) {
             var latestChapter = document.createElement('div');
             latestChapter.className = 'muted';
             latestChapter.textContent = '最近章节：' + book.chapter;
-            row.appendChild(latestChapter);
+            details.appendChild(latestChapter);
           }
           removeButton.type = 'button';
           removeButton.textContent = '取消收藏';
           removeButton.onclick = function () {
             removeFavorite(book, removeButton);
           };
-          row.appendChild(removeButton);
+          details.appendChild(removeButton);
+          row.appendChild(details);
           list.appendChild(row);
         }
 
@@ -446,130 +637,6 @@
             }
             loadFavorites();
           });
-        }
-
-        function loadSearchRules() {
-          var selector = document.getElementById('searchRule');
-          selector.textContent = '';
-          searchStatus.textContent = '正在加载书源...';
-          request('resource-rule/list', {}, function (error, data) {
-            var i;
-            if (error) {
-              searchStatus.className = 'notice error';
-              searchStatus.textContent = error.message;
-              return;
-            }
-            searchRules = (data || []).filter(function (rule) {
-              return rule.contentType === 1 && rule.enableSearch;
-            });
-            selector.textContent = '';
-            if (!searchRules.length) {
-              selector.appendChild(createOption('', '没有可搜索的小说书源'));
-              selector.disabled = true;
-              searchStatus.className = 'notice';
-              searchStatus.textContent = '请先在 AnyReader 中导入并启用小说书源。';
-              return;
-            }
-            selector.disabled = false;
-            for (i = 0; i < searchRules.length; i++) {
-              selector.appendChild(createOption(searchRules[i].id, searchRules[i].name));
-            }
-            searchStatus.className = 'notice';
-            searchStatus.textContent = '选择书源后搜索小说。';
-          });
-        }
-
-        function createOption(value, text) {
-          var option = document.createElement('option');
-          option.value = value;
-          option.textContent = text || '未命名书源';
-          return option;
-        }
-
-        function searchBooks() {
-          var selector = document.getElementById('searchRule');
-          var keyword = document.getElementById('searchKeyword').value.replace(/^\s+|\s+$/g, '');
-          var rule;
-          var requestId = ++searchRequestId;
-          var results = document.getElementById('searchResults');
-          var i;
-          results.textContent = '';
-          if (!keyword) {
-            searchStatus.className = 'notice error';
-            searchStatus.textContent = '请输入书名或关键词。';
-            return;
-          }
-          rule = searchRules[selector.selectedIndex];
-          if (!rule) {
-            searchStatus.className = 'notice error';
-            searchStatus.textContent = '没有可用的小说书源。';
-            return;
-          }
-          searchStatus.className = 'notice';
-          searchStatus.textContent = '正在搜索：' + rule.name + '...';
-          request('rule-manager/search-by-rule-id', { ruleId: rule.id, keyword: keyword, page: 1 }, function (error, data) {
-            if (requestId !== searchRequestId) return;
-            if (error) {
-              searchStatus.className = 'notice error';
-              searchStatus.textContent = error.message;
-              return;
-            }
-            data = data || [];
-            if (!data.length) {
-              searchStatus.className = 'notice';
-              searchStatus.textContent = '没有找到相关书籍。';
-              return;
-            }
-            searchStatus.className = 'notice';
-            searchStatus.textContent = '搜索结果：' + data.length + ' 本';
-            for (i = 0; i < data.length; i++) {
-              addSearchResult(data[i], rule, results);
-            }
-          });
-        }
-
-        function addSearchResult(result, rule, list) {
-          var row = document.createElement('div');
-          var link = document.createElement('a');
-          link.href = '#';
-          link.textContent = result.name || '未命名书籍';
-          link.onclick = function () {
-            loadChapters({
-              name: result.name,
-              path: result.url,
-              ruleId: rule.id
-            });
-            return false;
-          };
-          row.className = 'book';
-          row.appendChild(link);
-          if (result.author) {
-            var author = document.createElement('div');
-            author.className = 'muted';
-            author.textContent = '作者：' + result.author;
-            row.appendChild(author);
-          }
-          if (result.chapter) {
-            var latestChapter = document.createElement('div');
-            latestChapter.className = 'muted';
-            latestChapter.textContent = '最新章节：' + result.chapter;
-            row.appendChild(latestChapter);
-          }
-          list.appendChild(row);
-        }
-
-        function addBook(book, list) {
-          var row = document.createElement('div');
-          var link = document.createElement('a');
-          link.href = '#';
-          link.textContent = book.name || book.path || '未命名书籍';
-          link.onclick = function () {
-            loadChapters(book);
-            return false;
-          };
-          row.className = 'book';
-          row.appendChild(link);
-          list.appendChild(row);
         }
 
         function loadChapters(book) {
@@ -623,7 +690,7 @@
             var lastRead;
             var i;
             var resumeIndex;
-            var resumeLink = document.getElementById('resumeLink');
+            var resumeButton = document.getElementById('resumeButton');
             if (requestId !== chapterRequestId) return;
             if (error) {
               setNotice('无法读取阅读进度：' + error.message, true);
@@ -634,13 +701,13 @@
             for (i = 0; i < chapters.length; i++) {
               if (chapters[i].chapterPath === lastRead.chapterPath) {
                 resumeIndex = i;
-                resumeLink.textContent = '继续阅读：' + (chapters[i].name || '上次阅读章节');
-                resumeLink.onclick = (function (index) {
+                resumeButton.textContent = '继续阅读：' + (chapters[i].name || '上次阅读章节');
+                resumeButton.onclick = (function (index, percentage) {
                   return function () {
-                    openChapter(index);
+                    openChapter(index, percentage);
                     return false;
                   };
-                })(resumeIndex);
+                })(resumeIndex, lastRead.percentage);
                 document.getElementById('resumeRow').className = '';
                 return;
               }
@@ -648,16 +715,18 @@
           });
         }
 
-        function openChapter(index) {
+        function openChapter(index, percentage) {
           var chapter = chapters[index];
           var requestId = ++contentRequestId;
+          var resumePercentage = Number(percentage) || 0;
           if (!chapter || !selectedBook) return;
           chapterIndex = index;
           showView('readerView');
+          updateReaderLayout();
           document.getElementById('chapterTitle').textContent = chapter.name || '正文';
           readerText.textContent = '正在加载正文...';
+          readerText.scrollLeft = 0;
           setNotice('', false);
-          window.scrollTo(0, 0);
           request(
             'rule-manager/content',
             {
@@ -673,17 +742,16 @@
                 return;
               }
               if (data && data.contentDecoder) {
-                decodeContent(data.content, requestId);
+                decodeContent(data.content, requestId, resumePercentage);
               } else {
-                renderContent(data && data.content);
-                updateChapterButtons();
-                saveProgress(0);
+                renderContent(data && data.content, resumePercentage);
+                saveProgress(resumePercentage);
               }
             }
           );
         }
 
-        function decodeContent(content, requestId) {
+        function decodeContent(content, requestId, percentage) {
           var values = typeof content === 'string' ? [content] : content || [];
           var decoded = new Array(values.length);
           var nextIndex = 0;
@@ -695,9 +763,8 @@
             var index;
             if (requestId !== contentRequestId || failed) return;
             if (completed === values.length) {
-              renderContent(decoded);
-              updateChapterButtons();
-              saveProgress(0);
+              renderContent(decoded, percentage);
+              saveProgress(percentage);
               return;
             }
             while (active < 4 && nextIndex < values.length) {
@@ -720,9 +787,8 @@
           }
 
           if (!values.length) {
-            renderContent([]);
-            updateChapterButtons();
-            saveProgress(0);
+            renderContent([], percentage);
+            saveProgress(percentage);
             return;
           }
           decodeNext();
@@ -746,7 +812,7 @@
             });
         }
 
-        function renderContent(content) {
+        function renderContent(content, percentage) {
           var values;
           var i;
           readerText.textContent = '';
@@ -765,18 +831,26 @@
             readerText.appendChild(paragraph);
           }
           readerText.style.fontSize = readerFontSize + 'px';
+          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * ((Number(percentage) || 0) / 100000);
           if (!readerText.firstChild) {
             setNotice('本章没有可显示的正文。', false);
           }
         }
 
-        function updateChapterButtons() {
-          var previousDisabled = chapterIndex <= 0;
-          var nextDisabled = chapterIndex >= chapters.length - 1;
-          document.getElementById('previousChapter').disabled = previousDisabled;
-          document.getElementById('previousChapterBottom').disabled = previousDisabled;
-          document.getElementById('nextChapter').disabled = nextDisabled;
-          document.getElementById('nextChapterBottom').disabled = nextDisabled;
+        function turnPage(direction) {
+          var pageWidth = readerPageWidth || readerText.clientWidth || window.innerWidth;
+          var maxScroll = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
+          var nextScroll = readerText.scrollLeft + direction * pageWidth;
+          if (direction > 0 && readerText.scrollLeft >= maxScroll - 2 && chapterIndex < chapters.length - 1) {
+            openChapter(chapterIndex + 1);
+            return;
+          }
+          if (direction < 0 && readerText.scrollLeft <= 2 && chapterIndex > 0) {
+            openChapter(chapterIndex - 1);
+            return;
+          }
+          readerText.scrollLeft = Math.max(0, Math.min(maxScroll, nextScroll));
+          saveScrollProgress();
         }
 
         function saveProgress(percentage) {
@@ -797,20 +871,14 @@
         }
 
         function saveScrollProgress() {
-          var documentElement = document.documentElement;
-          var body = document.body;
-          var viewportHeight = window.innerHeight || documentElement.clientHeight || body.clientHeight || 0;
-          var scrollTop = window.pageYOffset || documentElement.scrollTop || body.scrollTop || 0;
-          var scrollHeight = Math.max(documentElement.scrollHeight, body.scrollHeight);
-          var scrollable = scrollHeight - viewportHeight;
-          var percentage = scrollable > 0 ? Math.floor((scrollTop / scrollable) * 100000) : 0;
+          var scrollable = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
+          var percentage = scrollable > 0 ? Math.floor((readerText.scrollLeft / scrollable) * 100000) : 0;
           saveProgress(percentage);
         }
 
         function bindChapterButton(id, step) {
           document.getElementById(id).onclick = function () {
-            var nextIndex = chapterIndex + step;
-            if (nextIndex >= 0 && nextIndex < chapters.length) openChapter(nextIndex);
+            turnPage(step);
           };
         }
 
@@ -835,7 +903,7 @@
               return;
             }
             document.getElementById('password').value = '';
-            loadBooks();
+            showFavorites();
           };
           xhr.onerror = function () {
             setNotice('无法连接 AnyReader 服务，请检查网络连接', true);
@@ -844,15 +912,9 @@
           return false;
         };
 
-        document.getElementById('searchForm').onsubmit = function (event) {
-          event = event || window.event;
-          if (event.preventDefault) event.preventDefault();
-          searchBooks();
-          return false;
-        };
         document.getElementById('refreshFavorites').onclick = loadFavorites;
         document.getElementById('backToBooks').onclick = function () {
-          loadBooks();
+          showFavorites();
           return false;
         };
         document.getElementById('reloadChapters').onclick = function () {
@@ -863,29 +925,65 @@
           showView('chaptersView');
           return false;
         };
-        document.getElementById('backToChaptersBottom').onclick = function () {
-          showView('chaptersView');
-          return false;
-        };
-        bindChapterButton('previousChapter', -1);
-        bindChapterButton('previousChapterBottom', -1);
-        bindChapterButton('nextChapter', 1);
-        bindChapterButton('nextChapterBottom', 1);
+        bindChapterButton('previousPage', -1);
+        bindChapterButton('nextPage', 1);
         document.getElementById('smallerText').onclick = function () {
-          readerFontSize = Math.max(14, readerFontSize - 2);
+          var percentage = getScrollPercentage();
+          readerFontSize = Math.max(minimumReaderFontSize, readerFontSize - 2);
           readerText.style.fontSize = readerFontSize + 'px';
+          updateReaderLayout();
+          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * (percentage / 100000);
+          saveProgress(percentage);
         };
         document.getElementById('largerText').onclick = function () {
-          readerFontSize = Math.min(32, readerFontSize + 2);
+          var percentage = getScrollPercentage();
+          readerFontSize = Math.min(maximumReaderFontSize, readerFontSize + 2);
           readerText.style.fontSize = readerFontSize + 'px';
+          updateReaderLayout();
+          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * (percentage / 100000);
+          saveProgress(percentage);
         };
-        window.onscroll = function () {
+        readerText.onscroll = function () {
           if (currentView !== 'readerView') return;
           if (progressTimer) window.clearTimeout(progressTimer);
           progressTimer = window.setTimeout(saveScrollProgress, 1000);
         };
+        readerText.ontouchstart = function (event) {
+          if (event.touches && event.touches.length) touchStartX = event.touches[0].clientX;
+        };
+        readerText.ontouchend = function (event) {
+          var endX;
+          var difference;
+          if (!event.changedTouches || !event.changedTouches.length) return;
+          endX = event.changedTouches[0].clientX;
+          difference = endX - touchStartX;
+          if (Math.abs(difference) < 40) return;
+          ignoreNextReaderClick = true;
+          window.setTimeout(function () {
+            ignoreNextReaderClick = false;
+          }, 600);
+          turnPage(difference < 0 ? 1 : -1);
+          if (event.preventDefault) event.preventDefault();
+        };
+        readerText.onclick = function (event) {
+          var bounds = readerText.getBoundingClientRect();
+          var x = (event.clientX || event.pageX) - bounds.left;
+          var width = bounds.width || readerText.clientWidth || window.innerWidth;
+          if (ignoreNextReaderClick) {
+            ignoreNextReaderClick = false;
+            return;
+          }
+          if (x < width * 0.3) turnPage(-1);
+          else if (x > width * 0.7) turnPage(1);
+        };
+        window.onresize = function () {
+          if (currentView !== 'readerView') return;
+          var percentage = getScrollPercentage();
+          updateReaderLayout();
+          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * (percentage / 100000);
+        };
 
-        loadBooks();
+        showFavorites();
       })();
     </script>
   </body>
