@@ -11,13 +11,11 @@
 </template>
 
 <script setup>
-import Local from './Local.vue';
-import Favorites from './Favorites.vue';
 import History from './History.vue';
+import Shelf from './Shelf.vue';
 
 const navs = [
-  { title: '收藏', component: Favorites },
-  { title: '本地', component: Local },
+  { title: '书架', component: Shelf },
   { title: '历史', component: History }
 ];
 

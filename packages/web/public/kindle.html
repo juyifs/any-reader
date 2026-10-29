@@ -309,10 +309,10 @@
 
     <section id="booksView">
       <div id="favoritesSection" class="toolbar">
-        <h2>收藏书架</h2>
-        <button id="refreshFavorites" type="button">刷新收藏</button>
+        <h2>书架</h2>
+        <button id="refreshFavorites" type="button">刷新书架</button>
       </div>
-      <div id="favoritesStatus" class="notice">正在加载收藏...</div>
+      <div id="favoritesStatus" class="notice">正在加载书架...</div>
       <div id="favoritesList"></div>
     </section>
 
@@ -569,51 +569,78 @@
           setNotice('', false);
         }
 
-        function showFavorites() {
+        function showBookshelf() {
           showView('booksView');
           setNotice('', false);
-          loadFavorites();
+          loadBookshelf();
         }
 
-        function loadFavorites() {
+        function loadBookshelf() {
           var requestId = ++favoritesRequestId;
           var list = document.getElementById('favoritesList');
+          var localBooks = [];
+          var favoriteBooks = [];
+          var errors = [];
+          var pending = 2;
+
+          function finishRequest() {
+            var i;
+            if (--pending || requestId !== favoritesRequestId) return;
+            list.textContent = '';
+            for (i = 0; i < localBooks.length; i++) {
+              addFavorite(localBooks[i], list, true);
+            }
+            for (i = 0; i < favoriteBooks.length; i++) {
+              addFavorite(favoriteBooks[i], list, false);
+            }
+            if (errors.length) {
+              favoritesStatus.className = 'notice error';
+              favoritesStatus.textContent = '部分书架内容加载失败：' + errors.join('；');
+            } else if (!localBooks.length && !favoriteBooks.length) {
+              favoritesStatus.className = 'notice';
+              favoritesStatus.textContent = '书架为空。可在 AnyReader 设置中配置本地书籍目录，或在完整版收藏书籍。';
+            } else {
+              favoritesStatus.className = 'notice';
+              favoritesStatus.textContent = '';
+            }
+          }
+
           list.textContent = '';
           favoritesStatus.className = 'notice';
-          favoritesStatus.textContent = '正在加载收藏...';
+          favoritesStatus.textContent = '正在加载书架...';
           request('resource-favorites/list', {}, function (error, data) {
-            var i;
             if (requestId !== favoritesRequestId) return;
             if (error) {
-              favoritesStatus.className = 'notice error';
-              favoritesStatus.textContent = '无法加载收藏：' + error.message;
-              return;
+              errors.push('收藏：' + error.message);
+            } else {
+              favoriteBooks = data || [];
             }
-            data = data || [];
-            if (!data.length) {
-              favoritesStatus.className = 'notice';
-              favoritesStatus.textContent = '还没有收藏的书籍。可在 AnyReader 完整版的搜索结果中收藏书籍。';
-              return;
+            finishRequest();
+          });
+          request('bookshelf/list', {}, function (error, data) {
+            if (requestId !== favoritesRequestId) return;
+            if (error) {
+              errors.push('本地书籍：' + error.message);
+            } else {
+              localBooks = data || [];
             }
-            favoritesStatus.textContent = '';
-            for (i = 0; i < data.length; i++) {
-              addFavorite(data[i], list);
-            }
+            finishRequest();
           });
         }
 
-        function addFavorite(book, list) {
+        function addFavorite(book, list, isLocal) {
           var row = document.createElement('div');
           var link = document.createElement('a');
           var removeButton = document.createElement('button');
           var details = document.createElement('div');
+          var bookPath = isLocal ? book.path : book.url;
           link.href = '#';
-          link.textContent = book.name || book.url || '未命名书籍';
+          link.textContent = book.name || bookPath || '未命名书籍';
           link.onclick = function () {
             loadChapters({
               name: book.name,
-              path: book.url,
-              ruleId: book.ruleId
+              path: bookPath,
+              ruleId: isLocal ? '' : book.ruleId
             });
             return false;
           };
@@ -622,24 +649,32 @@
           details.className = 'book-details';
           link.className = 'book-title';
           details.appendChild(link);
+          if (isLocal) {
+            var localLabel = document.createElement('div');
+            localLabel.className = 'muted';
+            localLabel.textContent = '本地书籍';
+            details.appendChild(localLabel);
+          }
           if (book.author) {
             var author = document.createElement('div');
             author.className = 'muted';
             author.textContent = '作者：' + book.author;
             details.appendChild(author);
           }
-          if (book.chapter) {
+          if (!isLocal && book.chapter) {
             var latestChapter = document.createElement('div');
             latestChapter.className = 'muted';
             latestChapter.textContent = '最近章节：' + book.chapter;
             details.appendChild(latestChapter);
           }
-          removeButton.type = 'button';
-          removeButton.textContent = '取消收藏';
-          removeButton.onclick = function () {
-            removeFavorite(book, removeButton);
-          };
-          details.appendChild(removeButton);
+          if (!isLocal) {
+            removeButton.type = 'button';
+            removeButton.textContent = '取消收藏';
+            removeButton.onclick = function () {
+              removeFavorite(book, removeButton);
+            };
+            details.appendChild(removeButton);
+          }
           row.appendChild(details);
           list.appendChild(row);
         }
@@ -653,7 +688,7 @@
               favoritesStatus.textContent = '取消收藏失败：' + error.message;
               return;
             }
-            loadFavorites();
+            loadBookshelf();
           });
         }
 
@@ -921,7 +956,7 @@
               return;
             }
             document.getElementById('password').value = '';
-            showFavorites();
+            showBookshelf();
           };
           xhr.onerror = function () {
             setNotice('无法连接 AnyReader 服务，请检查网络连接', true);
@@ -930,9 +965,9 @@
           return false;
         };
 
-        document.getElementById('refreshFavorites').onclick = loadFavorites;
+        document.getElementById('refreshFavorites').onclick = loadBookshelf;
         document.getElementById('backToBooks').onclick = function () {
-          showFavorites();
+          showBookshelf();
           return false;
         };
         document.getElementById('reloadChapters').onclick = function () {
@@ -1004,7 +1039,7 @@
           restoreScrollPercentage(percentage);
         };
 
-        showFavorites();
+        showBookshelf();
       })();
     </script>
   </body>
