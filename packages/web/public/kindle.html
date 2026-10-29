@@ -174,10 +174,10 @@
         box-sizing: border-box;
         width: 100%;
         height: 100%;
-        padding: 32px 12px 84px;
+        padding: 36px 28px 96px;
         overflow-x: auto;
         overflow-y: hidden;
-        font-size: 36px;
+        font-size: 48px;
         line-height: 1.6;
         overflow-wrap: break-word;
         white-space: pre-wrap;
@@ -200,11 +200,11 @@
         position: absolute;
         z-index: 2;
         top: 2px;
-        left: 8px;
-        right: 8px;
+        left: 28px;
+        right: 28px;
         overflow: hidden;
         margin: 0;
-        font-size: 20px;
+        font-size: 24px;
         font-weight: normal;
         text-align: center;
         text-overflow: ellipsis;
@@ -232,15 +232,15 @@
       }
 
       .floating-toolbar button {
-        min-width: 50px;
-        margin: 4px;
-        padding: 9px 11px;
+        min-width: 56px;
+        margin: 5px;
+        padding: 10px 12px;
         color: #111;
         background: #fff;
         border: 1px solid #777;
         border-radius: 3px;
         font: inherit;
-        font-size: 22px;
+        font-size: 24px;
       }
 
       .floating-toolbar button:disabled {
@@ -346,9 +346,10 @@
         var selectedBook = null;
         var chapters = [];
         var chapterIndex = -1;
-        var readerFontSize = 36;
+        var readerFontSize = 48;
         var minimumReaderFontSize = 12;
-        var maximumReaderFontSize = 56;
+        var maximumReaderFontSize = 72;
+        var readerFontSizeStorageKey = 'any-reader-kindle-font-size';
         var readerPageWidth = 0;
         var touchStartX = 0;
         var ignoreNextReaderClick = false;
@@ -361,6 +362,28 @@
         var notice = document.getElementById('notice');
         var readerText = document.getElementById('readerText');
         var favoritesStatus = document.getElementById('favoritesStatus');
+
+        function loadReaderFontSize() {
+          var savedFontSize;
+          try {
+            savedFontSize = Number(window.localStorage.getItem(readerFontSizeStorageKey));
+          } catch (error) {
+            setNotice('无法读取已保存的字体设置：' + error.message, true);
+            return readerFontSize;
+          }
+          if (savedFontSize >= minimumReaderFontSize && savedFontSize <= maximumReaderFontSize) return savedFontSize;
+          return readerFontSize;
+        }
+
+        function saveReaderFontSize() {
+          try {
+            window.localStorage.setItem(readerFontSizeStorageKey, String(readerFontSize));
+          } catch (error) {
+            setNotice('无法保存字体设置：' + error.message, true);
+          }
+        }
+
+        readerFontSize = loadReaderFontSize();
 
         function setNotice(text, isError) {
           notice.className = isError ? 'notice error' : 'notice';
@@ -408,7 +431,7 @@
         }
 
         function updateReaderLayout() {
-          readerPageWidth = Math.max(1, readerText.clientWidth - 20);
+          readerPageWidth = Math.max(1, readerText.clientWidth - 56);
           readerText.style.webkitColumnWidth = readerPageWidth + 'px';
           readerText.style.columnWidth = readerPageWidth + 'px';
         }
@@ -990,18 +1013,20 @@
         document.getElementById('smallerText').onclick = function () {
           var percentage = getScrollPercentage();
           readerFontSize = Math.max(minimumReaderFontSize, readerFontSize - 2);
+          saveReaderFontSize();
           readerText.style.fontSize = readerFontSize + 'px';
           updateReaderLayout();
           restoreScrollPercentage(percentage);
-          saveProgress(percentage);
+          saveScrollProgress();
         };
         document.getElementById('largerText').onclick = function () {
           var percentage = getScrollPercentage();
           readerFontSize = Math.min(maximumReaderFontSize, readerFontSize + 2);
+          saveReaderFontSize();
           readerText.style.fontSize = readerFontSize + 'px';
           updateReaderLayout();
           restoreScrollPercentage(percentage);
-          saveProgress(percentage);
+          saveScrollProgress();
         };
         readerText.onscroll = function () {
           if (currentView !== 'readerView') return;
