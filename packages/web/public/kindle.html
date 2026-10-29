@@ -12,8 +12,8 @@
         color: #111;
         background: #fff;
         font-family: SimHei, '黑体', Arial, sans-serif;
-        font-size: 18px;
-        line-height: 1.55;
+        font-size: 22px;
+        line-height: 1.6;
       }
 
       h1,
@@ -37,18 +37,22 @@
       }
 
       .toolbar {
-        padding: 6px 0;
+        padding: 8px 0;
         border-bottom: 1px solid #999;
       }
 
       #favoritesSection {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        overflow: hidden;
       }
 
       #favoritesSection h2 {
+        float: left;
         margin: 0;
+      }
+
+      #favoritesSection button {
+        float: right;
+        margin-right: 0;
       }
 
       .toolbar a,
@@ -56,7 +60,7 @@
       .access-box button {
         display: inline-block;
         margin: 2px 4px 2px 0;
-        padding: 5px 8px;
+        padding: 7px 10px;
         color: #111;
         background: #fff;
         border: 1px solid #555;
@@ -68,7 +72,7 @@
       .book a,
       .chapter a {
         display: block;
-        padding: 3px 0;
+        padding: 6px 0;
       }
 
       .muted {
@@ -77,7 +81,7 @@
       }
 
       .notice {
-        padding: 4px 0;
+        padding: 7px 0;
         color: #333;
       }
 
@@ -90,12 +94,11 @@
       }
 
       .book {
-        display: inline-block;
-        vertical-align: top;
+        display: block;
         box-sizing: border-box;
-        width: 49%;
-        min-height: 108px;
-        padding: 6px 3px;
+        width: 100%;
+        min-height: 122px;
+        padding: 9px 4px;
         border-bottom: 1px solid #999;
       }
 
@@ -103,9 +106,9 @@
         float: left;
         display: block;
         box-sizing: border-box;
-        width: 64px;
-        height: 88px;
-        margin: 0 8px 3px 0;
+        width: 76px;
+        height: 104px;
+        margin: 0 10px 4px 0;
         border: 1px solid #888;
         background: #eee;
         object-fit: cover;
@@ -115,14 +118,14 @@
         float: left;
         display: block;
         box-sizing: border-box;
-        width: 64px;
-        height: 88px;
-        margin: 0 8px 3px 0;
-        padding: 22px 4px;
+        width: 76px;
+        height: 104px;
+        margin: 0 10px 4px 0;
+        padding: 30px 4px;
         border: 1px solid #888;
         background: #eee;
         text-align: center;
-        font-size: 13px;
+        font-size: 16px;
       }
 
       .book-details {
@@ -135,9 +138,9 @@
 
       .book button {
         margin-top: 4px;
-        padding: 3px 5px;
+        padding: 5px 8px;
         font: inherit;
-        font-size: 13px;
+        font-size: 16px;
       }
 
       #readerView {
@@ -175,7 +178,7 @@
         padding: 28px 10px 24px;
         overflow-x: auto;
         overflow-y: hidden;
-        font-size: 24px;
+        font-size: 28px;
         line-height: 1.65;
         overflow-wrap: break-word;
         white-space: pre-wrap;
@@ -202,7 +205,7 @@
         right: 8px;
         overflow: hidden;
         margin: 0;
-        font-size: 14px;
+        font-size: 17px;
         font-weight: normal;
         text-align: center;
         text-overflow: ellipsis;
@@ -230,15 +233,15 @@
       }
 
       .floating-toolbar button {
-        min-width: 34px;
-        margin: 2px;
-        padding: 4px 6px;
+        min-width: 42px;
+        margin: 3px;
+        padding: 7px 9px;
         color: #111;
         background: #fff;
         border: 1px solid #777;
         border-radius: 3px;
         font: inherit;
-        font-size: 15px;
+        font-size: 18px;
       }
 
       .floating-toolbar button:disabled {
@@ -261,7 +264,7 @@
       @media (max-width: 420px) {
         body {
           padding: 4px;
-          font-size: 16px;
+          font-size: 20px;
         }
 
         body.reading {
@@ -270,17 +273,17 @@
 
         .book {
           width: 100%;
-          min-height: 84px;
+          min-height: 108px;
         }
 
         .book-cover,
         .book-cover-placeholder {
-          width: 56px;
-          height: 76px;
+          width: 68px;
+          height: 92px;
         }
 
         .book-cover-placeholder {
-          padding-top: 18px;
+          padding-top: 25px;
         }
 
         .floating-toolbar {
@@ -414,6 +417,21 @@
         function getScrollPercentage() {
           var scrollable = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
           return scrollable > 0 ? Math.floor((readerText.scrollLeft / scrollable) * 100000) : 0;
+        }
+
+        function restoreScrollPercentage(percentage) {
+          var scrollable = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
+          var pageWidth = readerPageWidth || readerText.clientWidth || window.innerWidth;
+          var target = scrollable * ((Number(percentage) || 0) / 100000);
+          var page = Math.round(target / pageWidth);
+          readerText.scrollLeft = Math.min(scrollable, page * pageWidth);
+        }
+
+        function alignReaderPage() {
+          var scrollable = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
+          var pageWidth = readerPageWidth || readerText.clientWidth || window.innerWidth;
+          var page = Math.round(readerText.scrollLeft / pageWidth);
+          readerText.scrollLeft = Math.min(scrollable, page * pageWidth);
         }
 
         function md5(value) {
@@ -831,7 +849,7 @@
             readerText.appendChild(paragraph);
           }
           readerText.style.fontSize = readerFontSize + 'px';
-          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * ((Number(percentage) || 0) / 100000);
+          restoreScrollPercentage(percentage);
           if (!readerText.firstChild) {
             setNotice('本章没有可显示的正文。', false);
           }
@@ -932,7 +950,7 @@
           readerFontSize = Math.max(minimumReaderFontSize, readerFontSize - 2);
           readerText.style.fontSize = readerFontSize + 'px';
           updateReaderLayout();
-          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * (percentage / 100000);
+          restoreScrollPercentage(percentage);
           saveProgress(percentage);
         };
         document.getElementById('largerText').onclick = function () {
@@ -940,13 +958,16 @@
           readerFontSize = Math.min(maximumReaderFontSize, readerFontSize + 2);
           readerText.style.fontSize = readerFontSize + 'px';
           updateReaderLayout();
-          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * (percentage / 100000);
+          restoreScrollPercentage(percentage);
           saveProgress(percentage);
         };
         readerText.onscroll = function () {
           if (currentView !== 'readerView') return;
           if (progressTimer) window.clearTimeout(progressTimer);
-          progressTimer = window.setTimeout(saveScrollProgress, 1000);
+          progressTimer = window.setTimeout(function () {
+            alignReaderPage();
+            saveScrollProgress();
+          }, 1000);
         };
         readerText.ontouchstart = function (event) {
           if (event.touches && event.touches.length) touchStartX = event.touches[0].clientX;
@@ -980,7 +1001,7 @@
           if (currentView !== 'readerView') return;
           var percentage = getScrollPercentage();
           updateReaderLayout();
-          readerText.scrollLeft = Math.max(0, readerText.scrollWidth - readerText.clientWidth) * (percentage / 100000);
+          restoreScrollPercentage(percentage);
         };
 
         showFavorites();
