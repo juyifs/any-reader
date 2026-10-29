@@ -152,8 +152,14 @@
       }
 
       body.reading {
+        height: 100%;
         overflow: hidden;
         padding: 0;
+      }
+
+      html.reading {
+        height: 100%;
+        overflow: hidden;
       }
 
       body.reading > #notice {
@@ -190,6 +196,12 @@
         -webkit-overflow-scrolling: touch;
       }
 
+      #readerText::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+      }
+
       .reader-paragraph {
         margin: 0 0 0.85em;
         text-indent: 2em;
@@ -217,7 +229,7 @@
         position: fixed;
         z-index: 30;
         right: 6px;
-        bottom: 221px;
+        bottom: 4px;
         left: 6px;
         padding: 2px;
         border: 1px solid #777;
@@ -291,7 +303,7 @@
 
         .floating-toolbar {
           right: 3px;
-          bottom: 221px;
+          bottom: 4px;
           left: 3px;
         }
       }
@@ -446,9 +458,9 @@
         function updateReaderViewport() {
           var visualViewport = window.visualViewport;
           var layoutHeight = window.innerHeight || document.documentElement.clientHeight;
-          var viewportHeight = visualViewport ? visualViewport.height : layoutHeight - 217;
+          var viewportHeight = visualViewport ? visualViewport.height : document.documentElement.clientHeight || layoutHeight;
           var viewportTop = visualViewport ? visualViewport.offsetTop : 0;
-          var bottomInset = visualViewport ? Math.max(0, layoutHeight - viewportTop - viewportHeight) : 217;
+          var bottomInset = visualViewport ? Math.max(0, layoutHeight - viewportTop - viewportHeight) : 0;
           var readerView = document.getElementById('readerView');
           var readerToolbar = document.getElementById('readerToolbar');
           if (viewportHeight > 0) {
@@ -561,6 +573,7 @@
             document.getElementById(viewIds[i]).className = viewIds[i] === id ? '' : 'hidden';
           }
           document.body.className = id === 'readerView' ? 'reading' : '';
+          document.documentElement.className = id === 'readerView' ? 'reading' : '';
           currentView = id;
         }
 
