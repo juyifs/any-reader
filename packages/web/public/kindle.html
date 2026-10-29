@@ -192,6 +192,7 @@
 
       .reader-paragraph {
         margin: 0 0 0.85em;
+        text-indent: 2em;
       }
 
       #chapterTitle {
@@ -212,10 +213,11 @@
       }
 
       .floating-toolbar {
-        position: absolute;
+        display: none;
+        position: fixed;
         z-index: 30;
         right: 6px;
-        bottom: 4px;
+        bottom: 221px;
         left: 6px;
         padding: 2px;
         border: 1px solid #777;
@@ -247,6 +249,10 @@
 
       .reader-hint {
         display: none;
+      }
+
+      body.reading > #readerToolbar {
+        display: block;
       }
 
       input[type='password'] {
@@ -285,7 +291,7 @@
 
         .floating-toolbar {
           right: 3px;
-          bottom: 4px;
+          bottom: 221px;
           left: 3px;
         }
       }
@@ -328,15 +334,16 @@
     <section id="readerView" class="hidden">
       <h2 id="chapterTitle"></h2>
       <div id="readerText"></div>
-      <div id="readerToolbar" class="floating-toolbar">
-        <button id="previousPage" type="button" aria-label="上一页">‹</button>
-        <button id="backToChapters" type="button">目录</button>
-        <button id="smallerText" type="button" aria-label="缩小字号">A-</button>
-        <button id="largerText" type="button" aria-label="放大字号">A+</button>
-        <button id="nextPage" type="button" aria-label="下一页">›</button>
-      </div>
       <div class="reader-hint">点按屏幕左右两侧翻页</div>
     </section>
+
+    <div id="readerToolbar" class="floating-toolbar">
+      <button id="previousPage" type="button" aria-label="上一页">‹</button>
+      <button id="backToChapters" type="button">目录</button>
+      <button id="smallerText" type="button" aria-label="缩小字号">A-</button>
+      <button id="largerText" type="button" aria-label="放大字号">A+</button>
+      <button id="nextPage" type="button" aria-label="下一页">›</button>
+    </div>
 
     <script>
       (function () {
@@ -438,14 +445,16 @@
 
         function updateReaderViewport() {
           var visualViewport = window.visualViewport;
-          var viewportHeight = visualViewport
-            ? visualViewport.height
-            : document.documentElement.clientHeight || window.innerHeight;
+          var layoutHeight = window.innerHeight || document.documentElement.clientHeight;
+          var viewportHeight = visualViewport ? visualViewport.height : layoutHeight - 217;
           var viewportTop = visualViewport ? visualViewport.offsetTop : 0;
+          var bottomInset = visualViewport ? Math.max(0, layoutHeight - viewportTop - viewportHeight) : 217;
           var readerView = document.getElementById('readerView');
+          var readerToolbar = document.getElementById('readerToolbar');
           if (viewportHeight > 0) {
             readerView.style.top = viewportTop + 'px';
             readerView.style.height = viewportHeight + 'px';
+            readerToolbar.style.bottom = bottomInset + 4 + 'px';
           }
         }
 
