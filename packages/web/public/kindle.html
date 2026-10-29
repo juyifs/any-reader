@@ -150,6 +150,12 @@
       <div id="searchResults"></div>
       <h2>本地书架</h2>
       <div id="booksList"></div>
+      <div id="favoritesSection" class="toolbar">
+        <h2>收藏书架</h2>
+        <button id="refreshFavorites" type="button">刷新收藏</button>
+      </div>
+      <div id="favoritesStatus" class="notice">正在加载收藏...</div>
+      <div id="favoritesList"></div>
     </section>
 
     <section id="chaptersView" class="hidden">
@@ -192,12 +198,14 @@
         var chapterRequestId = 0;
         var contentRequestId = 0;
         var searchRequestId = 0;
+        var favoritesRequestId = 0;
         var progressTimer = null;
         var accessMode = 'login';
         var viewIds = ['accessView', 'booksView', 'chaptersView', 'readerView'];
         var notice = document.getElementById('notice');
         var readerText = document.getElementById('readerText');
         var searchStatus = document.getElementById('searchStatus');
+        var favoritesStatus = document.getElementById('favoritesStatus');
 
         function setNotice(text, isError) {
           notice.className = isError ? 'notice error' : 'notice';
@@ -265,6 +273,7 @@
           showView('booksView');
           setNotice('正在加载书架...', false);
           loadSearchRules();
+          loadFavorites();
           request('bookshelf/list', {}, function (error, data) {
             var list = document.getElementById('booksList');
             var i;
@@ -282,6 +291,83 @@
             for (i = 0; i < data.length; i++) {
               addBook(data[i], list);
             }
+          });
+        }
+
+        function loadFavorites() {
+          var requestId = ++favoritesRequestId;
+          var list = document.getElementById('favoritesList');
+          list.textContent = '';
+          favoritesStatus.className = 'notice';
+          favoritesStatus.textContent = '正在加载收藏...';
+          request('resource-favorites/list', {}, function (error, data) {
+            var i;
+            if (requestId !== favoritesRequestId) return;
+            if (error) {
+              favoritesStatus.className = 'notice error';
+              favoritesStatus.textContent = '无法加载收藏：' + error.message;
+              return;
+            }
+            data = data || [];
+            if (!data.length) {
+              favoritesStatus.className = 'notice';
+              favoritesStatus.textContent = '还没有收藏的书籍。可在 AnyReader 完整版的搜索结果中收藏书籍。';
+              return;
+            }
+            favoritesStatus.textContent = '';
+            for (i = 0; i < data.length; i++) {
+              addFavorite(data[i], list);
+            }
+          });
+        }
+
+        function addFavorite(book, list) {
+          var row = document.createElement('div');
+          var link = document.createElement('a');
+          var removeButton = document.createElement('button');
+          link.href = '#';
+          link.textContent = book.name || book.url || '未命名书籍';
+          link.onclick = function () {
+            loadChapters({
+              name: book.name,
+              path: book.url,
+              ruleId: book.ruleId
+            });
+            return false;
+          };
+          row.className = 'book';
+          row.appendChild(link);
+          if (book.author) {
+            var author = document.createElement('div');
+            author.className = 'muted';
+            author.textContent = '作者：' + book.author;
+            row.appendChild(author);
+          }
+          if (book.chapter) {
+            var latestChapter = document.createElement('div');
+            latestChapter.className = 'muted';
+            latestChapter.textContent = '最近章节：' + book.chapter;
+            row.appendChild(latestChapter);
+          }
+          removeButton.type = 'button';
+          removeButton.textContent = '取消收藏';
+          removeButton.onclick = function () {
+            removeFavorite(book, removeButton);
+          };
+          row.appendChild(removeButton);
+          list.appendChild(row);
+        }
+
+        function removeFavorite(book, button) {
+          button.disabled = true;
+          request('resource-favorites/unstar', { ruleId: book.ruleId, url: book.url }, function (error) {
+            if (error) {
+              button.disabled = false;
+              favoritesStatus.className = 'notice error';
+              favoritesStatus.textContent = '取消收藏失败：' + error.message;
+              return;
+            }
+            loadFavorites();
           });
         }
 
@@ -687,6 +773,7 @@
           searchBooks();
           return false;
         };
+        document.getElementById('refreshFavorites').onclick = loadFavorites;
         document.getElementById('backToBooks').onclick = function () {
           loadBooks();
           return false;
