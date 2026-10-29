@@ -44,7 +44,12 @@
           @click.stop
         >
           <div @click="navsShow = true"><MenuOutlined class="mr-5" /></div>
-          <div class="app-region-drag flex flex-1 items-center justify-center">any-reader</div>
+          <div
+            class="app-region-drag min-w-0 flex flex-1 items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap px-8"
+            :title="route.path === '/content' ? currentChapterLabel : 'any-reader'"
+          >
+            {{ route.path === '/content' ? currentChapterLabel : 'any-reader' }}
+          </div>
           <SearchOutlined @click="navTo('/search')" />
         </div>
         <!-- 侧边栏 - 大屏 -->
@@ -129,6 +134,7 @@ import { App } from 'ant-design-vue';
 import { useBus, EVENT_CHAPTERS_BOX, EVENT_SEARCH_BOX, EVENT_SETTING_BOX } from '@/utils/bus';
 import { useSettingStore } from '@/stores/setting';
 import { useReadStore } from '@/stores/read';
+import { useChaptersStore } from '@/stores/chapters';
 import Setting from '@/components/Setting/index.vue';
 import Search from '@/components/Search/index.vue';
 import BaseLayout from './components/BaseLayout.vue';
@@ -141,6 +147,7 @@ const route = useRoute();
 const router = useRouter();
 const settingStore = useSettingStore();
 const readStore = useReadStore();
+const chaptersStore = useChaptersStore();
 const openChaptersBox = useBus(EVENT_CHAPTERS_BOX);
 const searchBox = useBus(EVENT_SEARCH_BOX);
 const settingBox = useBus(EVENT_SETTING_BOX);
@@ -158,6 +165,12 @@ const navsShow = ref(false);
 const readerTopBarVisible = ref(false);
 const pageContentRef = ref<HTMLElement>();
 let readerTopBarTimer: ReturnType<typeof setTimeout> | undefined;
+
+const currentChapterLabel = computed(() => {
+  const chapterIndex = chaptersStore.chapters.findIndex((chapter) => chapter.chapterPath === readStore.path);
+  if (chapterIndex < 0) return readStore.title || 'any-reader';
+  return `第${chapterIndex + 1}章 ${readStore.title}`;
+});
 
 function hideReaderTopBar() {
   if (readerTopBarTimer) clearTimeout(readerTopBarTimer);
