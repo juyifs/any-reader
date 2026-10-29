@@ -14,6 +14,7 @@
 import md5 from 'blueimp-md5';
 import bcrypt from 'bcryptjs';
 import { install } from '@/api';
+import { useSettingStore } from '@/stores/setting';
 
 const inputText = ref('');
 const loading = ref(false);
@@ -26,6 +27,7 @@ async function submit() {
   const res = await install({ password: bcrypt.hashSync(md5(inputText.value), 10) }).catch(() => {});
   loading.value = false;
   if (res?.code === 0) {
+    await useSettingStore().sync();
     router.push('/');
   }
 }
