@@ -61,6 +61,10 @@ pnpm run web:dev
 
 软件会自动加载目录下的 `.txt` 和 `.epub` 文件
 
+### Kindle 浏览器无法打开页面
+
+在同一 AnyReader 服务地址后添加 `/kindle.html`，即可打开 Kindle 简洁阅读版。该页面使用基础 HTML 和浏览器内置请求接口，支持小说书源搜索、本地书架、章节目录、正文阅读、章节切换、字号调整和阅读进度保存。Kindle 版不包含完整网页的多媒体播放及朗读控制等功能。
+
 ### 数据文件在哪
 
 windows: `C:\Users\%USERNAME%\.any-reader\`

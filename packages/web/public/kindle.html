@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>AnyReader Kindle 简洁版</title>
+    <style>
+      body {
+        margin: 0 auto;
+        padding: 16px;
+        max-width: 720px;
+        color: #111;
+        background: #fff;
+        font-family: serif;
+        font-size: 18px;
+        line-height: 1.65;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.3;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: 1.35em;
+      }
+
+      h2 {
+        font-size: 1.1em;
+      }
+
+      a {
+        color: #111;
+        text-decoration: underline;
+      }
+
+      .header,
+      .toolbar,
+      .book,
+      .chapter,
+      .access-box {
+        padding: 12px 0;
+        border-bottom: 1px solid #999;
+      }
+
+      .header a {
+        display: inline-block;
+        margin-top: 6px;
+      }
+
+      .toolbar a,
+      .toolbar button,
+      .access-box button {
+        display: inline-block;
+        margin: 4px 8px 4px 0;
+        padding: 8px 10px;
+        color: #111;
+        background: #fff;
+        border: 1px solid #555;
+        border-radius: 2px;
+        font: inherit;
+        text-decoration: none;
+      }
+
+      .book a,
+      .chapter a {
+        display: block;
+        padding: 8px 0;
+      }
+
+      .muted {
+        color: #444;
+        font-size: 0.85em;
+      }
+
+      .notice {
+        padding: 8px 0;
+        color: #333;
+      }
+
+      .error {
+        color: #900;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #readerText {
+        font-size: 20px;
+        line-height: 1.8;
+        overflow-wrap: break-word;
+        white-space: pre-wrap;
+      }
+
+      .reader-paragraph {
+        margin: 0 0 1em;
+      }
+
+      input[type='password'] {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        margin: 8px 0;
+        padding: 10px;
+        font: inherit;
+      }
+
+      @media (max-width: 420px) {
+        body {
+          padding: 12px;
+          font-size: 17px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>AnyReader Kindle 简洁版</h1>
+      <div class="muted">适用于 Kindle 内置浏览器的简洁阅读页面</div>
+      <a href="/">打开完整网页</a>
+    </div>
+
+    <div id="notice" class="notice" role="status">正在加载书架...</div>
+
+    <section id="accessView" class="hidden">
+      <h2 id="accessTitle">登录</h2>
+      <p id="accessDescription">请输入 AnyReader 访问密码。</p>
+      <form id="accessForm" class="access-box">
+        <label for="password">访问密码</label>
+        <input id="password" type="password" autocomplete="current-password" />
+        <button id="accessButton" type="submit">登录</button>
+      </form>
+    </section>
+
+    <section id="booksView">
+      <h2>在线搜索</h2>
+      <form id="searchForm" class="access-box">
+        <label for="searchRule">书源</label>
+        <select id="searchRule" style="display: block; box-sizing: border-box; width: 100%; margin: 8px 0; padding: 10px; font: inherit">
+          <option value="">正在加载书源...</option>
+        </select>
+        <label for="searchKeyword">书名或关键词</label>
+        <input id="searchKeyword" type="text" autocomplete="off" />
+        <button type="submit">搜索</button>
+      </form>
+      <div id="searchStatus" class="notice"></div>
+      <div id="searchResults"></div>
+      <h2>本地书架</h2>
+      <div id="booksList"></div>
+    </section>
+
+    <section id="chaptersView" class="hidden">
+      <div class="toolbar">
+        <a id="backToBooks" href="#">返回书架</a>
+        <a id="reloadChapters" href="#">刷新目录</a>
+      </div>
+      <h2 id="bookTitle"></h2>
+      <p id="resumeRow" class="hidden">
+        <a id="resumeLink" href="#">继续阅读</a>
+      </p>
+      <div id="chaptersList"></div>
+    </section>
+
+    <section id="readerView" class="hidden">
+      <div class="toolbar">
+        <a id="backToChapters" href="#">返回目录</a>
+        <button id="previousChapter" type="button">上一章</button>
+        <button id="nextChapter" type="button">下一章</button>
+        <button id="smallerText" type="button" aria-label="缩小字号">A-</button>
+        <button id="largerText" type="button" aria-label="放大字号">A+</button>
+      </div>
+      <h2 id="chapterTitle"></h2>
+      <div id="readerText"></div>
+      <div class="toolbar">
+        <a id="backToChaptersBottom" href="#">返回目录</a>
+        <button id="previousChapterBottom" type="button">上一章</button>
+        <button id="nextChapterBottom" type="button">下一章</button>
+      </div>
+    </section>
+
+    <script>
+      (function () {
+        var currentView = 'booksView';
+        var selectedBook = null;
+        var searchRules = [];
+        var chapters = [];
+        var chapterIndex = -1;
+        var readerFontSize = 20;
+        var chapterRequestId = 0;
+        var contentRequestId = 0;
+        var searchRequestId = 0;
+        var progressTimer = null;
+        var accessMode = 'login';
+        var viewIds = ['accessView', 'booksView', 'chaptersView', 'readerView'];
+        var notice = document.getElementById('notice');
+        var readerText = document.getElementById('readerText');
+        var searchStatus = document.getElementById('searchStatus');
+
+        function setNotice(text, isError) {
+          notice.className = isError ? 'notice error' : 'notice';
+          notice.textContent = text || '';
+        }
+
+        function showView(id) {
+          var i;
+          for (i = 0; i < viewIds.length; i++) {
+            document.getElementById(viewIds[i]).className = viewIds[i] === id ? '' : 'hidden';
+          }
+          currentView = id;
+        }
+
+        function request(path, data, callback) {
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', '/' + path, true);
+          xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+          xhr.onreadystatechange = function () {
+            var result;
+            if (xhr.readyState !== 4) return;
+            if (xhr.status < 200 || xhr.status >= 300) {
+              callback(new Error('服务器请求失败（' + xhr.status + '）'));
+              return;
+            }
+            try {
+              result = JSON.parse(xhr.responseText);
+            } catch (error) {
+              callback(new Error('服务器返回了无法识别的数据'));
+              return;
+            }
+            if (result.code === 401) {
+              showAccess(false);
+              return;
+            }
+            if (result.code === 10001) {
+              showAccess(true);
+              return;
+            }
+            if (result.code !== 0) {
+              callback(new Error(result.msg || '请求失败'));
+              return;
+            }
+            callback(null, result.data);
+          };
+          xhr.onerror = function () {
+            callback(new Error('无法连接 AnyReader 服务，请检查网络连接'));
+          };
+          xhr.send(JSON.stringify(data || {}));
+        }
+
+        function showAccess(needsSetup) {
+          accessMode = needsSetup ? 'install' : 'login';
+          document.getElementById('accessTitle').textContent = needsSetup ? '首次使用' : '需要登录';
+          document.getElementById('accessDescription').textContent = needsSetup
+            ? '请先设置 AnyReader 访问密码。'
+            : '请输入 AnyReader 访问密码。';
+          document.getElementById('accessButton').textContent = needsSetup ? '设置密码' : '登录';
+          document.getElementById('password').autocomplete = needsSetup ? 'new-password' : 'current-password';
+          showView('accessView');
+          setNotice('', false);
+        }
+
+        function loadBooks() {
+          showView('booksView');
+          setNotice('正在加载书架...', false);
+          loadSearchRules();
+          request('bookshelf/list', {}, function (error, data) {
+            var list = document.getElementById('booksList');
+            var i;
+            list.textContent = '';
+            if (error) {
+              setNotice(error.message, true);
+              return;
+            }
+            data = data || [];
+            if (!data.length) {
+              setNotice('书架为空。请在 AnyReader 设置中配置本地书籍目录并放入 TXT 或 EPUB 文件。', false);
+              return;
+            }
+            setNotice('', false);
+            for (i = 0; i < data.length; i++) {
+              addBook(data[i], list);
+            }
+          });
+        }
+
+        function loadSearchRules() {
+          var selector = document.getElementById('searchRule');
+          selector.textContent = '';
+          searchStatus.textContent = '正在加载书源...';
+          request('resource-rule/list', {}, function (error, data) {
+            var i;
+            if (error) {
+              searchStatus.className = 'notice error';
+              searchStatus.textContent = error.message;
+              return;
+            }
+            searchRules = (data || []).filter(function (rule) {
+              return rule.contentType === 1 && rule.enableSearch;
+            });
+            selector.textContent = '';
+            if (!searchRules.length) {
+              selector.appendChild(createOption('', '没有可搜索的小说书源'));
+              selector.disabled = true;
+              searchStatus.className = 'notice';
+              searchStatus.textContent = '请先在 AnyReader 中导入并启用小说书源。';
+              return;
+            }
+            selector.disabled = false;
+            for (i = 0; i < searchRules.length; i++) {
+              selector.appendChild(createOption(searchRules[i].id, searchRules[i].name));
+            }
+            searchStatus.className = 'notice';
+            searchStatus.textContent = '选择书源后搜索小说。';
+          });
+        }
+
+        function createOption(value, text) {
+          var option = document.createElement('option');
+          option.value = value;
+          option.textContent = text || '未命名书源';
+          return option;
+        }
+
+        function searchBooks() {
+          var selector = document.getElementById('searchRule');
+          var keyword = document.getElementById('searchKeyword').value.replace(/^\s+|\s+$/g, '');
+          var rule;
+          var requestId = ++searchRequestId;
+          var results = document.getElementById('searchResults');
+          var i;
+          results.textContent = '';
+          if (!keyword) {
+            searchStatus.className = 'notice error';
+            searchStatus.textContent = '请输入书名或关键词。';
+            return;
+          }
+          rule = searchRules[selector.selectedIndex];
+          if (!rule) {
+            searchStatus.className = 'notice error';
+            searchStatus.textContent = '没有可用的小说书源。';
+            return;
+          }
+          searchStatus.className = 'notice';
+          searchStatus.textContent = '正在搜索：' + rule.name + '...';
+          request('rule-manager/search-by-rule-id', { ruleId: rule.id, keyword: keyword, page: 1 }, function (error, data) {
+            if (requestId !== searchRequestId) return;
+            if (error) {
+              searchStatus.className = 'notice error';
+              searchStatus.textContent = error.message;
+              return;
+            }
+            data = data || [];
+            if (!data.length) {
+              searchStatus.className = 'notice';
+              searchStatus.textContent = '没有找到相关书籍。';
+              return;
+            }
+            searchStatus.className = 'notice';
+            searchStatus.textContent = '搜索结果：' + data.length + ' 本';
+            for (i = 0; i < data.length; i++) {
+              addSearchResult(data[i], rule, results);
+            }
+          });
+        }
+
+        function addSearchResult(result, rule, list) {
+          var row = document.createElement('div');
+          var link = document.createElement('a');
+          link.href = '#';
+          link.textContent = result.name || '未命名书籍';
+          link.onclick = function () {
+            loadChapters({
+              name: result.name,
+              path: result.url,
+              ruleId: rule.id
+            });
+            return false;
+          };
+          row.className = 'book';
+          row.appendChild(link);
+          if (result.author) {
+            var author = document.createElement('div');
+            author.className = 'muted';
+            author.textContent = '作者：' + result.author;
+            row.appendChild(author);
+          }
+          if (result.chapter) {
+            var latestChapter = document.createElement('div');
+            latestChapter.className = 'muted';
+            latestChapter.textContent = '最新章节：' + result.chapter;
+            row.appendChild(latestChapter);
+          }
+          list.appendChild(row);
+        }
+
+        function addBook(book, list) {
+          var row = document.createElement('div');
+          var link = document.createElement('a');
+          link.href = '#';
+          link.textContent = book.name || book.path || '未命名书籍';
+          link.onclick = function () {
+            loadChapters(book);
+            return false;
+          };
+          row.className = 'book';
+          row.appendChild(link);
+          list.appendChild(row);
+        }
+
+        function loadChapters(book) {
+          var requestId = ++chapterRequestId;
+          selectedBook = book;
+          chapters = [];
+          chapterIndex = -1;
+          document.getElementById('bookTitle').textContent = book.name || '目录';
+          document.getElementById('chaptersList').textContent = '';
+          document.getElementById('resumeRow').className = 'hidden';
+          showView('chaptersView');
+          setNotice('正在加载目录...', false);
+          request('rule-manager/chapter', { filePath: book.path, ruleId: book.ruleId || '' }, function (error, data) {
+            var list = document.getElementById('chaptersList');
+            var i;
+            if (requestId !== chapterRequestId) return;
+            list.textContent = '';
+            if (error) {
+              setNotice(error.message, true);
+              return;
+            }
+            chapters = data || [];
+            if (!chapters.length) {
+              setNotice('没有找到章节。', false);
+              return;
+            }
+            setNotice('', false);
+            for (i = 0; i < chapters.length; i++) {
+              addChapter(chapters[i], i, list);
+            }
+            loadLastReadChapter(requestId);
+          });
+        }
+
+        function addChapter(chapter, index, list) {
+          var row = document.createElement('div');
+          var link = document.createElement('a');
+          link.href = '#';
+          link.textContent = chapter.name || '第 ' + (index + 1) + ' 章';
+          link.onclick = function () {
+            openChapter(index);
+            return false;
+          };
+          row.className = 'chapter';
+          row.appendChild(link);
+          list.appendChild(row);
+        }
+
+        function loadLastReadChapter(requestId) {
+          request('chapter-history/list', { ruleId: selectedBook.ruleId || '', filePath: selectedBook.path }, function (error, history) {
+            var lastRead;
+            var i;
+            var resumeIndex;
+            var resumeLink = document.getElementById('resumeLink');
+            if (requestId !== chapterRequestId) return;
+            if (error) {
+              setNotice('无法读取阅读进度：' + error.message, true);
+              return;
+            }
+            if (!history || !history.length) return;
+            lastRead = history[0];
+            for (i = 0; i < chapters.length; i++) {
+              if (chapters[i].chapterPath === lastRead.chapterPath) {
+                resumeIndex = i;
+                resumeLink.textContent = '继续阅读：' + (chapters[i].name || '上次阅读章节');
+                resumeLink.onclick = (function (index) {
+                  return function () {
+                    openChapter(index);
+                    return false;
+                  };
+                })(resumeIndex);
+                document.getElementById('resumeRow').className = '';
+                return;
+              }
+            }
+          });
+        }
+
+        function openChapter(index) {
+          var chapter = chapters[index];
+          var requestId = ++contentRequestId;
+          if (!chapter || !selectedBook) return;
+          chapterIndex = index;
+          showView('readerView');
+          document.getElementById('chapterTitle').textContent = chapter.name || '正文';
+          readerText.textContent = '正在加载正文...';
+          setNotice('', false);
+          window.scrollTo(0, 0);
+          request(
+            'rule-manager/content',
+            {
+              filePath: selectedBook.path,
+              chapterPath: chapter.chapterPath,
+              ruleId: selectedBook.ruleId || ''
+            },
+            function (error, data) {
+              if (requestId !== contentRequestId) return;
+              if (error) {
+                readerText.textContent = '';
+                setNotice(error.message, true);
+                return;
+              }
+              if (data && data.contentDecoder) {
+                decodeContent(data.content, requestId);
+              } else {
+                renderContent(data && data.content);
+                updateChapterButtons();
+                saveProgress(0);
+              }
+            }
+          );
+        }
+
+        function decodeContent(content, requestId) {
+          var values = typeof content === 'string' ? [content] : content || [];
+          var decoded = new Array(values.length);
+          var nextIndex = 0;
+          var active = 0;
+          var completed = 0;
+          var failed = false;
+
+          function decodeNext() {
+            var index;
+            if (requestId !== contentRequestId || failed) return;
+            if (completed === values.length) {
+              renderContent(decoded);
+              updateChapterButtons();
+              saveProgress(0);
+              return;
+            }
+            while (active < 4 && nextIndex < values.length) {
+              index = nextIndex++;
+              active++;
+              request('rule-manager/content-decoder', { ruleId: selectedBook.ruleId, content: values[index] }, function (error, text) {
+                active--;
+                if (requestId !== contentRequestId) return;
+                if (error) {
+                  failed = true;
+                  readerText.textContent = '';
+                  setNotice('正文解密失败：' + error.message, true);
+                  return;
+                }
+                decoded[index] = text;
+                completed++;
+                decodeNext();
+              });
+            }
+          }
+
+          if (!values.length) {
+            renderContent([]);
+            updateChapterButtons();
+            saveProgress(0);
+            return;
+          }
+          decodeNext();
+        }
+
+        function plainText(value) {
+          return String(value)
+            .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '')
+            .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '')
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/(p|div|h[1-6]|li|section|article)\s*>/gi, '\n\n')
+            .replace(/<[^>]*>/g, '')
+            .replace(/&nbsp;|&#160;|&#xA0;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;|&apos;/gi, "'")
+            .replace(/&#(?:x([0-9a-f]+)|([0-9]+));/gi, function (match, hex, decimal) {
+              return String.fromCharCode(parseInt(hex || decimal, hex ? 16 : 10));
+            });
+        }
+
+        function renderContent(content) {
+          var values;
+          var i;
+          readerText.textContent = '';
+          if (typeof content === 'string') {
+            values = [content];
+          } else if (content && typeof content.length === 'number') {
+            values = content;
+          } else {
+            values = [];
+          }
+          for (i = 0; i < values.length; i++) {
+            if (!values[i]) continue;
+            var paragraph = document.createElement('div');
+            paragraph.className = 'reader-paragraph';
+            paragraph.textContent = plainText(values[i]);
+            readerText.appendChild(paragraph);
+          }
+          readerText.style.fontSize = readerFontSize + 'px';
+          if (!readerText.firstChild) {
+            setNotice('本章没有可显示的正文。', false);
+          }
+        }
+
+        function updateChapterButtons() {
+          var previousDisabled = chapterIndex <= 0;
+          var nextDisabled = chapterIndex >= chapters.length - 1;
+          document.getElementById('previousChapter').disabled = previousDisabled;
+          document.getElementById('previousChapterBottom').disabled = previousDisabled;
+          document.getElementById('nextChapter').disabled = nextDisabled;
+          document.getElementById('nextChapterBottom').disabled = nextDisabled;
+        }
+
+        function saveProgress(percentage) {
+          var chapter = chapters[chapterIndex];
+          if (!chapter || !selectedBook) return;
+          request(
+            'chapter-history/save',
+            {
+              ruleId: selectedBook.ruleId || '',
+              filePath: selectedBook.path,
+              chapterPath: chapter.chapterPath,
+              percentage: percentage
+            },
+            function (error) {
+              if (error) setNotice('阅读进度保存失败：' + error.message, true);
+            }
+          );
+        }
+
+        function saveScrollProgress() {
+          var documentElement = document.documentElement;
+          var body = document.body;
+          var viewportHeight = window.innerHeight || documentElement.clientHeight || body.clientHeight || 0;
+          var scrollTop = window.pageYOffset || documentElement.scrollTop || body.scrollTop || 0;
+          var scrollHeight = Math.max(documentElement.scrollHeight, body.scrollHeight);
+          var scrollable = scrollHeight - viewportHeight;
+          var percentage = scrollable > 0 ? Math.floor((scrollTop / scrollable) * 100000) : 0;
+          saveProgress(percentage);
+        }
+
+        function bindChapterButton(id, step) {
+          document.getElementById(id).onclick = function () {
+            var nextIndex = chapterIndex + step;
+            if (nextIndex >= 0 && nextIndex < chapters.length) openChapter(nextIndex);
+          };
+        }
+
+        document.getElementById('accessForm').onsubmit = function (event) {
+          var password = document.getElementById('password').value;
+          var xhr = new XMLHttpRequest();
+          event = event || window.event;
+          if (event.preventDefault) event.preventDefault();
+          xhr.open('POST', '/' + accessMode, true);
+          xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+          xhr.onreadystatechange = function () {
+            var result;
+            if (xhr.readyState !== 4) return;
+            try {
+              result = JSON.parse(xhr.responseText);
+            } catch (error) {
+              setNotice('服务器返回了无法识别的数据', true);
+              return;
+            }
+            if (xhr.status < 200 || xhr.status >= 300 || result.code !== 0) {
+              setNotice(result.msg || '密码验证失败', true);
+              return;
+            }
+            document.getElementById('password').value = '';
+            loadBooks();
+          };
+          xhr.onerror = function () {
+            setNotice('无法连接 AnyReader 服务，请检查网络连接', true);
+          };
+          xhr.send(JSON.stringify({ password: password }));
+          return false;
+        };
+
+        document.getElementById('searchForm').onsubmit = function (event) {
+          event = event || window.event;
+          if (event.preventDefault) event.preventDefault();
+          searchBooks();
+          return false;
+        };
+        document.getElementById('backToBooks').onclick = function () {
+          loadBooks();
+          return false;
+        };
+        document.getElementById('reloadChapters').onclick = function () {
+          if (selectedBook) loadChapters(selectedBook);
+          return false;
+        };
+        document.getElementById('backToChapters').onclick = function () {
+          showView('chaptersView');
+          return false;
+        };
+        document.getElementById('backToChaptersBottom').onclick = function () {
+          showView('chaptersView');
+          return false;
+        };
+        bindChapterButton('previousChapter', -1);
+        bindChapterButton('previousChapterBottom', -1);
+        bindChapterButton('nextChapter', 1);
+        bindChapterButton('nextChapterBottom', 1);
+        document.getElementById('smallerText').onclick = function () {
+          readerFontSize = Math.max(14, readerFontSize - 2);
+          readerText.style.fontSize = readerFontSize + 'px';
+        };
+        document.getElementById('largerText').onclick = function () {
+          readerFontSize = Math.min(32, readerFontSize + 2);
+          readerText.style.fontSize = readerFontSize + 'px';
+        };
+        window.onscroll = function () {
+          if (currentView !== 'readerView') return;
+          if (progressTimer) window.clearTimeout(progressTimer);
+          progressTimer = window.setTimeout(saveScrollProgress, 1000);
+        };
+
+        loadBooks();
+      })();
+    </script>
+  </body>
+</html>

@@ -166,7 +166,11 @@ export async function start(port = 8898, root = resolve(__dirname, 'public')) {
   app
     .use(session(SESSION_CONFIG, app))
     .use(async (ctx, next) => {
-      if (ctx.session!.uid || ['/favicon.ico', '/login', '/install', '/', 'index.html'].includes(ctx.path) || /^\/assets\//.test(ctx.path)) {
+      if (
+        ctx.session!.uid ||
+        ['/favicon.ico', '/login', '/install', '/', '/kindle.html', 'index.html'].includes(ctx.path) ||
+        /^\/assets\//.test(ctx.path)
+      ) {
         await next();
         return;
       }
