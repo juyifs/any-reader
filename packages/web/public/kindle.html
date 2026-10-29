@@ -8,7 +8,7 @@
     <style>
       body {
         margin: 0;
-        padding: 6px;
+        padding: 6px 24px;
         color: #111;
         background: #fff;
         font-family: SimHei, '黑体', Arial, sans-serif;
@@ -177,15 +177,15 @@
         padding: 36px 28px 96px;
         overflow-x: auto;
         overflow-y: hidden;
-        font-size: 48px;
+        font-size: 56px;
         line-height: 1.6;
         overflow-wrap: break-word;
         white-space: pre-wrap;
         -webkit-column-width: 100vw;
-        -webkit-column-gap: 0;
+        -webkit-column-gap: 56px;
         -webkit-column-fill: auto;
         column-width: 100vw;
-        column-gap: 0;
+        column-gap: 56px;
         column-fill: auto;
         -webkit-overflow-scrolling: touch;
       }
@@ -262,7 +262,7 @@
 
       @media (max-width: 420px) {
         body {
-          padding: 4px;
+          padding: 4px 20px;
           font-size: 24px;
         }
 
@@ -346,11 +346,10 @@
         var selectedBook = null;
         var chapters = [];
         var chapterIndex = -1;
-        var readerFontSize = 48;
+        var readerFontSize = 56;
         var minimumReaderFontSize = 12;
         var maximumReaderFontSize = 72;
-        var readerFontSizeStorageKey = 'any-reader-kindle-font-size';
-        var readerPageWidth = 0;
+        var readerFontSizeStorageKey = 'any-reader-kindle-font-size-v2';
         var touchStartX = 0;
         var ignoreNextReaderClick = false;
         var chapterRequestId = 0;
@@ -431,9 +430,12 @@
         }
 
         function updateReaderLayout() {
-          readerPageWidth = Math.max(1, readerText.clientWidth - 56);
-          readerText.style.webkitColumnWidth = readerPageWidth + 'px';
-          readerText.style.columnWidth = readerPageWidth + 'px';
+          var horizontalPadding = 56;
+          var pageWidth = readerText.clientWidth || window.innerWidth;
+          readerText.style.webkitColumnWidth = Math.max(1, pageWidth - horizontalPadding) + 'px';
+          readerText.style.columnWidth = Math.max(1, pageWidth - horizontalPadding) + 'px';
+          readerText.style.webkitColumnGap = horizontalPadding + 'px';
+          readerText.style.columnGap = horizontalPadding + 'px';
         }
 
         function updateReaderViewport() {
@@ -450,7 +452,7 @@
 
         function restoreScrollPercentage(percentage) {
           var scrollable = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
-          var pageWidth = readerPageWidth || readerText.clientWidth || window.innerWidth;
+          var pageWidth = readerText.clientWidth || window.innerWidth;
           var target = scrollable * ((Number(percentage) || 0) / 100000);
           var page = Math.round(target / pageWidth);
           readerText.scrollLeft = Math.min(scrollable, page * pageWidth);
@@ -458,7 +460,7 @@
 
         function alignReaderPage() {
           var scrollable = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
-          var pageWidth = readerPageWidth || readerText.clientWidth || window.innerWidth;
+          var pageWidth = readerText.clientWidth || window.innerWidth;
           var page = Math.round(readerText.scrollLeft / pageWidth);
           readerText.scrollLeft = Math.min(scrollable, page * pageWidth);
         }
@@ -921,7 +923,7 @@
         }
 
         function turnPage(direction) {
-          var pageWidth = readerPageWidth || readerText.clientWidth || window.innerWidth;
+          var pageWidth = readerText.clientWidth || window.innerWidth;
           var maxScroll = Math.max(0, readerText.scrollWidth - readerText.clientWidth);
           var nextScroll = readerText.scrollLeft + direction * pageWidth;
           if (direction > 0 && readerText.scrollLeft >= maxScroll - 2 && chapterIndex < chapters.length - 1) {
