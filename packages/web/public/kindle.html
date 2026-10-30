@@ -283,6 +283,12 @@
         color: #888;
       }
 
+      .floating-toolbar .chapter-navigation {
+        padding-right: 6px;
+        padding-left: 6px;
+        font-size: 24px;
+      }
+
       .reader-hint {
         display: none;
       }
@@ -374,11 +380,12 @@
     </section>
 
     <div id="readerToolbar" class="floating-toolbar">
-      <button id="previousPage" type="button" aria-label="上一页">‹</button>
+      <button id="backToBookshelf" type="button">书架</button>
+      <button id="previousChapter" class="chapter-navigation" type="button" aria-label="上一章">上一章</button>
       <button id="backToChapters" type="button">目录</button>
       <button id="smallerText" type="button" aria-label="缩小字号">A-</button>
       <button id="largerText" type="button" aria-label="放大字号">A+</button>
-      <button id="nextPage" type="button" aria-label="下一页">›</button>
+      <button id="nextChapter" class="chapter-navigation" type="button" aria-label="下一章">下一章</button>
     </div>
 
     <script>
@@ -998,7 +1005,9 @@
 
         function bindChapterButton(id, step) {
           document.getElementById(id).onclick = function () {
-            turnPage(step);
+            var targetIndex = chapterIndex + step;
+            if (targetIndex < 0 || targetIndex >= chapters.length) return;
+            openChapter(targetIndex, step < 0 ? 100000 : 0);
           };
         }
 
@@ -1045,8 +1054,11 @@
           showView('chaptersView');
           return false;
         };
-        bindChapterButton('previousPage', -1);
-        bindChapterButton('nextPage', 1);
+        document.getElementById('backToBookshelf').onclick = function () {
+          showBookshelf();
+        };
+        bindChapterButton('previousChapter', -1);
+        bindChapterButton('nextChapter', 1);
         document.getElementById('smallerText').onclick = function () {
           var percentage = getScrollPercentage();
           readerFontSize = Math.max(minimumReaderFontSize, readerFontSize - 2);
