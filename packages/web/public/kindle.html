@@ -94,29 +94,25 @@
       }
 
       .book {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        display: block;
+        float: left;
         box-sizing: border-box;
-        min-width: 0;
+        width: 31%;
+        margin: 1%;
         padding: 10px 6px;
         border: 1px solid #999;
         text-align: center;
       }
 
       #favoritesList {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
+        overflow: hidden;
       }
 
       .book-cover {
         display: block;
         box-sizing: border-box;
         width: 100%;
-        max-width: 92px;
         height: auto;
-        aspect-ratio: 92 / 126;
         margin: 0 auto 8px;
         border: 1px solid #888;
         background: #eee;
@@ -124,16 +120,14 @@
       }
 
       .book-cover-placeholder {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        display: block;
         box-sizing: border-box;
         width: 100%;
-        max-width: 92px;
-        aspect-ratio: 92 / 126;
+        height: 180px;
         margin: 0 auto 8px;
         border: 1px solid #888;
         background: #eee;
+        line-height: 180px;
         text-align: center;
         font-size: 19px;
       }
@@ -332,10 +326,6 @@
 
         body.reading {
           padding: 0;
-        }
-
-        #favoritesList {
-          gap: 8px;
         }
 
         .floating-toolbar {
@@ -712,7 +702,6 @@
         function addFavorite(book, list, isLocal) {
           var row = document.createElement('div');
           var link = document.createElement('a');
-          var removeButton = document.createElement('button');
           var details = document.createElement('div');
           var bookPath = isLocal ? book.path : book.url;
           link.href = '#';
@@ -726,51 +715,13 @@
             return false;
           };
           row.className = 'book';
+          if (list.children.length % 3 === 0) row.style.clear = 'left';
           addBookCover(book, row);
           details.className = 'book-details';
           link.className = 'book-title';
           details.appendChild(link);
-          if (isLocal) {
-            var localLabel = document.createElement('div');
-            localLabel.className = 'muted';
-            localLabel.textContent = '本地书籍';
-            details.appendChild(localLabel);
-          }
-          if (book.author) {
-            var author = document.createElement('div');
-            author.className = 'muted';
-            author.textContent = '作者：' + book.author;
-            details.appendChild(author);
-          }
-          if (!isLocal && book.chapter) {
-            var latestChapter = document.createElement('div');
-            latestChapter.className = 'muted';
-            latestChapter.textContent = '最近章节：' + book.chapter;
-            details.appendChild(latestChapter);
-          }
-          if (!isLocal) {
-            removeButton.type = 'button';
-            removeButton.textContent = '取消收藏';
-            removeButton.onclick = function () {
-              removeFavorite(book, removeButton);
-            };
-            details.appendChild(removeButton);
-          }
           row.appendChild(details);
           list.appendChild(row);
-        }
-
-        function removeFavorite(book, button) {
-          button.disabled = true;
-          request('resource-favorites/unstar', { ruleId: book.ruleId, url: book.url }, function (error) {
-            if (error) {
-              button.disabled = false;
-              favoritesStatus.className = 'notice error';
-              favoritesStatus.textContent = '取消收藏失败：' + error.message;
-              return;
-            }
-            loadBookshelf();
-          });
         }
 
         function loadChapters(book) {
