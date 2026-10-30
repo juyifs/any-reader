@@ -965,7 +965,7 @@
             return;
           }
           if (direction < 0 && readerText.scrollLeft <= 2 && chapterIndex > 0) {
-            openChapter(chapterIndex - 1);
+            openChapter(chapterIndex - 1, 100000);
             return;
           }
           readerText.scrollLeft = Math.max(0, Math.min(maxScroll, nextScroll));

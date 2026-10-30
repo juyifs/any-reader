@@ -195,7 +195,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     autoPrevScrollTimer && clearTimeout(autoPrevScrollTimer);
     autoPrevScrollTimer = setTimeout(() => {
       if (isAtScrollStart() && lastChapter.value) {
-        onPrevChapter();
+        onPrevChapterFromStart();
       }
       autoPrevLocked = false;
     }, 250);
@@ -395,13 +395,13 @@ export function useContent(contentRef: Ref<HTMLElement>) {
   /**
    * 跳转到指定章节
    */
-  function toChapter(chapterPath: string) {
+  function toChapter(chapterPath: string, percentage = 0) {
     if (!chapterPath) return;
     router.replace({
       name: route.name as string,
       query: {
         ...route.query,
-        percentage: 0,
+        percentage,
         chapterPath
       }
     });
@@ -412,6 +412,10 @@ export function useContent(contentRef: Ref<HTMLElement>) {
    */
   function onPrevChapter() {
     toChapter(lastChapter.value);
+  }
+
+  function onPrevChapterFromStart() {
+    toChapter(lastChapter.value, 100000);
   }
 
   /**
@@ -427,7 +431,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
   function onPageUp() {
     if (contentRef.value.classList.contains('reader-paged-container')) {
       if (contentRef.value.scrollLeft <= 1 && lastChapter.value) {
-        onPrevChapter();
+        onPrevChapterFromStart();
         return;
       }
       contentRef.value.scrollLeft = Math.max(0, contentRef.value.scrollLeft - contentRef.value.clientWidth);
@@ -435,7 +439,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     }
 
     if (contentRef.value.scrollTop <= 1 && lastChapter.value) {
-      onPrevChapter();
+      onPrevChapterFromStart();
       return;
     }
 
