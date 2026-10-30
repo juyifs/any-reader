@@ -190,6 +190,7 @@
         top: 0;
         right: 0;
         left: 0;
+        height: 1268px;
         overflow: hidden;
         background: #fff;
       }
@@ -198,18 +199,18 @@
         box-sizing: border-box;
         width: 100%;
         height: 100%;
-        padding: 36px 28px 96px;
+        padding: 36px 32px 96px;
         overflow-x: auto;
         overflow-y: hidden;
-        font-size: 56px;
+        font-size: 48px;
         line-height: 1.6;
         overflow-wrap: break-word;
         white-space: pre-wrap;
         -webkit-column-width: 100vw;
-        -webkit-column-gap: 56px;
+        -webkit-column-gap: 64px;
         -webkit-column-fill: auto;
         column-width: 100vw;
-        column-gap: 56px;
+        column-gap: 64px;
         column-fill: auto;
         -webkit-overflow-scrolling: touch;
       }
@@ -223,14 +224,18 @@
       .reader-paragraph {
         margin: 0 0 0.85em;
         text-indent: 2em;
+        orphans: 1;
+        widows: 1;
+        -webkit-column-break-inside: auto;
+        break-inside: auto;
       }
 
       #chapterTitle {
         position: absolute;
         z-index: 2;
         top: 2px;
-        left: 28px;
-        right: 28px;
+        left: 32px;
+        right: 32px;
         overflow: hidden;
         margin: 0;
         font-size: 24px;
@@ -381,10 +386,10 @@
         var selectedBook = null;
         var chapters = [];
         var chapterIndex = -1;
-        var readerFontSize = 56;
+        var readerFontSize = 48;
         var minimumReaderFontSize = 12;
         var maximumReaderFontSize = 72;
-        var readerFontSizeStorageKey = 'any-reader-kindle-font-size-v2';
+        var readerFontSizeStorageKey = 'any-reader-kindle-font-size-v3';
         var touchStartX = 0;
         var ignoreNextReaderClick = false;
         var chapterRequestId = 0;
@@ -465,27 +470,13 @@
         }
 
         function updateReaderLayout() {
-          var horizontalPadding = 56;
+          var style = window.getComputedStyle(readerText);
+          var horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
           var pageWidth = readerText.clientWidth || window.innerWidth;
           readerText.style.webkitColumnWidth = Math.max(1, pageWidth - horizontalPadding) + 'px';
           readerText.style.columnWidth = Math.max(1, pageWidth - horizontalPadding) + 'px';
           readerText.style.webkitColumnGap = horizontalPadding + 'px';
           readerText.style.columnGap = horizontalPadding + 'px';
-        }
-
-        function updateReaderViewport() {
-          var visualViewport = window.visualViewport;
-          var layoutHeight = window.innerHeight || document.documentElement.clientHeight;
-          var viewportHeight = visualViewport ? visualViewport.height : document.documentElement.clientHeight || layoutHeight;
-          var viewportTop = visualViewport ? visualViewport.offsetTop : 0;
-          var bottomInset = visualViewport ? Math.max(0, layoutHeight - viewportTop - viewportHeight) : 0;
-          var readerView = document.getElementById('readerView');
-          var readerToolbar = document.getElementById('readerToolbar');
-          if (viewportHeight > 0) {
-            readerView.style.top = viewportTop + 'px';
-            readerView.style.height = viewportHeight + 'px';
-            readerToolbar.style.bottom = bottomInset + 4 + 'px';
-          }
         }
 
         function getScrollPercentage() {
@@ -850,7 +841,6 @@
           if (!chapter || !selectedBook) return;
           chapterIndex = index;
           showView('readerView');
-          updateReaderViewport();
           updateReaderLayout();
           document.getElementById('chapterTitle').textContent = chapter.name || '正文';
           readerText.textContent = '正在加载正文...';
@@ -1113,7 +1103,6 @@
         function handleReaderViewportResize() {
           if (currentView !== 'readerView') return;
           var percentage = getScrollPercentage();
-          updateReaderViewport();
           updateReaderLayout();
           restoreScrollPercentage(percentage);
         }
@@ -1121,7 +1110,6 @@
         window.addEventListener('resize', handleReaderViewportResize);
         if (window.visualViewport) {
           window.visualViewport.addEventListener('resize', handleReaderViewportResize);
-          window.visualViewport.addEventListener('scroll', updateReaderViewport);
         }
 
         showBookshelf();
