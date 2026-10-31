@@ -19,6 +19,8 @@ import { executeCommand } from '@/api/modules/vsc';
 import { IS_BROWSER } from '@/constants';
 import { getImageProxyUrl } from '@/utils/imageProxy';
 import { filterNovelContent } from '@/utils/contentFilter';
+import { getServerChapterCache } from '@/api/modules/chapter-cache';
+import { getBrowserChapterCache, getChapterCacheRecordKey, materializeChapterCache, releaseCachedChapterAssets } from '@/utils/chapterCache';
 
 const chapterContentCache = new Map<string, Promise<ContentResponse>>();
 const MAX_CACHED_CHAPTERS = 3;
@@ -32,6 +34,26 @@ function getChapterCacheKey(params: Record<string, any>, chapterPath: string) {
 }
 
 async function fetchChapterContent(params: Record<string, any>, ruleId: string): Promise<ContentResponse> {
+  const identity = {
+    ruleId,
+    url: String(params.filePath || '')
+  };
+  const chapterPath = String(params.chapterPath || '');
+
+  try {
+    const cached = await getBrowserChapterCache(identity, chapterPath);
+    if (cached) return materializeChapterCache(cached);
+  } catch (error) {
+    console.warn('读取浏览器章节缓存失败', error);
+  }
+
+  try {
+    const cached = await getServerChapterCache({ ...identity, chapterPath });
+    if (cached?.code === 0 && cached.data) return materializeChapterCache(cached.data);
+  } catch (error) {
+    console.warn('读取服务器章节缓存失败，将从书源获取', error);
+  }
+
   const response = await getContent(params);
   if (response?.code !== 0) {
     throw new Error(response?.msg || '获取章节内容失败');
@@ -75,6 +97,12 @@ function cacheChapterContent(key: string, params: Record<string, any>, ruleId: s
     const oldestKey = chapterContentCache.keys().next().value;
     if (oldestKey === undefined) break;
     chapterContentCache.delete(oldestKey);
+    try {
+      const [ruleId, url, chapterPath] = JSON.parse(oldestKey) as string[];
+      releaseCachedChapterAssets(getChapterCacheRecordKey({ ruleId, url }, chapterPath));
+    } catch (error) {
+      console.warn('释放章节缓存图片资源失败', error);
+    }
   }
   return request;
 }

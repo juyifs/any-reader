@@ -6,9 +6,11 @@ import { App } from 'ant-design-vue';
 import { ContentType } from '@any-reader/rule-utils';
 import { getChapter, getContent } from '@/api';
 import { getChapterHistorys } from '@/api/modules/chapter-history';
+import { listServerChapterCache } from '@/api/modules/chapter-cache';
 import { openWindow } from '@/api/modules/electron';
 import { useRulesStore } from '@/stores/rules';
 import { useFavoritesStore } from '@/stores/favorites';
+import { listBrowserChapterCache } from '@/utils/chapterCache';
 
 function getFirstContentValue(content: unknown) {
   if (typeof content === 'string') return content;
@@ -72,6 +74,8 @@ export function useChapter() {
   let videoRequestGeneration = 0;
   /** 章节列表数据 */
   const list = ref<any[]>([]);
+  /** 已缓存章节路径 */
+  const cachedChapterPaths = ref(new Set<string>());
   /** 从章节页提取的简介 */
   const description = ref('');
   /** 阅读历史数据 */
@@ -93,6 +97,31 @@ export function useChapter() {
     }
   }
 
+  async function refreshChapterCacheStatus() {
+    const { filePath, ruleId } = route.query as Record<string, string>;
+    if (!filePath || !ruleId) {
+      cachedChapterPaths.value = new Set();
+      return;
+    }
+
+    const identity = { ruleId, url: filePath };
+    const cachedPaths = new Set<string>();
+    const [browserResult, serverResult] = await Promise.allSettled([listBrowserChapterCache(identity), listServerChapterCache(identity)]);
+
+    if (browserResult.status === 'fulfilled') {
+      browserResult.value.forEach(({ chapterPath }) => cachedPaths.add(chapterPath));
+    } else {
+      console.warn('读取浏览器章节缓存状态失败', browserResult.reason);
+    }
+
+    if (serverResult.status === 'fulfilled' && serverResult.value?.code === 0) {
+      serverResult.value.data.forEach(({ chapterPath }) => cachedPaths.add(chapterPath));
+    } else {
+      console.warn('读取服务器章节缓存状态失败', serverResult.status === 'rejected' ? serverResult.reason : serverResult.value?.msg);
+    }
+    cachedChapterPaths.value = cachedPaths;
+  }
+
   /**
    * 初始化章节列表数据
    */
@@ -106,11 +135,46 @@ export function useChapter() {
     if (!filePath && !ruleId) return;
     loading.value = true;
     const res = await getChapter(filePath, ruleId).catch(() => {});
-    loading.value = false;
     if (res?.code === 0) {
       list.value = res?.data || [];
       description.value = list.value.find((item) => item.description)?.description || '';
     }
+    if (!list.value.length && ruleId) {
+      const identity = { ruleId, url: filePath };
+      const cachedChapters = new Map<string, { chapterPath: string; chapterIndex: number; chapterName: string }>();
+      try {
+        for (const chapter of await listBrowserChapterCache(identity)) {
+          cachedChapters.set(chapter.chapterPath, {
+            chapterPath: chapter.chapterPath,
+            chapterIndex: chapter.chapterIndex,
+            chapterName: chapter.chapterName
+          });
+        }
+      } catch {
+        // IndexedDB may be unavailable in some embedded browsers; the server cache can still be used.
+      }
+      try {
+        const cached = await listServerChapterCache(identity);
+        if (cached?.code === 0) {
+          for (const chapter of cached.data) {
+            if (!cachedChapters.has(chapter.chapterPath)) {
+              cachedChapters.set(chapter.chapterPath, {
+                chapterPath: chapter.chapterPath,
+                chapterIndex: chapter.chapterIndex,
+                chapterName: chapter.chapterName
+              });
+            }
+          }
+        }
+      } catch {
+        // Keep any browser-cached chapters when the server is unavailable.
+      }
+      list.value = [...cachedChapters.values()]
+        .sort((a, b) => a.chapterIndex - b.chapterIndex || a.chapterPath.localeCompare(b.chapterPath))
+        .map(({ chapterPath, chapterName }) => ({ chapterPath, url: chapterPath, name: chapterName }));
+    }
+    await refreshChapterCacheStatus();
+    loading.value = false;
     await chapterHistory();
   }
 
@@ -125,6 +189,10 @@ export function useChapter() {
    */
   function findHistory(item: any) {
     return historys.value.find((history) => history.chapterPath === item.chapterPath);
+  }
+
+  function isChapterCached(item: any) {
+    return cachedChapterPaths.value.has(String(item.chapterPath || item.url || ''));
   }
 
   /**
@@ -264,6 +332,8 @@ export function useChapter() {
     getOriginalVideoUrl,
     findHistory,
     list,
+    isChapterCached,
+    refreshChapterCacheStatus,
     description,
     loading,
     historys,

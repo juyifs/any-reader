@@ -29,6 +29,16 @@
         </template>
         {{ isStarred ? '取消收藏' : '收藏' }}
       </a-button>
+      <ChapterCachePanel
+        v-if="isStarred && isCacheable"
+        :chapters="list"
+        :rule-id="String(ruleId)"
+        :book-url="String(route.query.filePath || '')"
+        :book-name="book.name"
+        :content-type="bookContentType"
+        class="flex items-center"
+        @cache-updated="refreshChapterCacheStatus"
+      />
     </div>
 
     <div
@@ -66,6 +76,7 @@
             <div class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap lh-32" :title="item.name">
               {{ item.name }}
             </div>
+            <a-tag v-if="isChapterCached(item)" color="success" class="m-0 shrink-0">已缓存</a-tag>
             <span v-if="isVideo && isResolvingOriginalVideo(item)" class="flex shrink-0 items-center gap-4 px-4">
               <a-spin size="small" />
               解析中
@@ -98,6 +109,7 @@ import { ref, computed } from 'vue';
 import { SearchOutlined, StarFilled, StarOutlined } from '@ant-design/icons-vue';
 import { ContentType } from '@any-reader/rule-utils';
 import { useRulesStore } from '@/stores/rules';
+import ChapterCachePanel from './ChapterCachePanel.vue';
 
 const route = useRoute();
 const rulesStore = useRulesStore();
@@ -113,6 +125,8 @@ const {
   historys,
   findHistory,
   isLastRead,
+  isChapterCached,
+  refreshChapterCacheStatus,
   ruleId,
   isStarred,
   star
@@ -133,9 +147,10 @@ const startChapter = computed(() => {
   return list.value[0];
 });
 const isMedia = computed(() => {
-  const contentType = rulesStore.list.find((rule) => rule.id === ruleId.value)?.contentType;
-  return contentType === ContentType.VIDEO || contentType === ContentType.AUDIO;
+  return bookContentType.value === ContentType.VIDEO || bookContentType.value === ContentType.AUDIO;
 });
+const bookContentType = computed(() => rulesStore.list.find((rule) => rule.id === ruleId.value)?.contentType ?? ContentType.NOVEL);
+const isCacheable = computed(() => bookContentType.value === ContentType.MANGA || bookContentType.value === ContentType.NOVEL);
 const isVideo = computed(() => rulesStore.list.find((rule) => rule.id === ruleId.value)?.contentType === ContentType.VIDEO);
 
 // 搜索

@@ -18,6 +18,7 @@ import { TTS } from './controller/TTS';
 import { Cache } from './controller/Cache';
 import { Annotations } from './controller/Annotations';
 import { BookMetadataController } from './controller/BookMetadata';
+import { ChapterCache } from './controller/ChapterCache';
 import { mapRoute } from './decorators';
 
 export interface App {
@@ -54,7 +55,8 @@ export function createApp(params: { configPath: string; defaultConfig?: any; dat
       TTS,
       Cache,
       Annotations,
-      BookMetadataController
+      BookMetadataController,
+      ChapterCache
     ],
 
     updateConfig(data: any) {

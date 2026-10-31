@@ -1,6 +1,7 @@
 import Router from 'koa-router';
 import bcrypt from 'bcryptjs';
 import type { App } from '@any-reader/shared';
+import { getChapterCacheJob, startChapterCacheJob, stopChapterCacheJob } from './chapter-cache-jobs';
 
 export function createRoute(api: App) {
   const router = new Router();
@@ -32,6 +33,38 @@ export function createRoute(api: App) {
     ctx.body = {
       code: 0
     };
+  });
+
+  router.post('/chapter-cache/job/start', (ctx) => {
+    try {
+      ctx.body = {
+        code: 0,
+        data: startChapterCacheJob(api, ctx.request.body as Parameters<typeof startChapterCacheJob>[1]),
+        msg: ''
+      };
+    } catch (error) {
+      ctx.body = { code: -1, data: null, msg: error instanceof Error ? error.message : String(error) };
+    }
+  });
+
+  router.post('/chapter-cache/job/status', (ctx) => {
+    const jobId = (ctx.request.body as { jobId?: string } | undefined)?.jobId;
+    if (!jobId) {
+      ctx.body = { code: -1, data: null, msg: '缓存任务 ID 不能为空' };
+      return;
+    }
+    const data = getChapterCacheJob(jobId);
+    ctx.body = data ? { code: 0, data, msg: '' } : { code: -1, data: null, msg: '缓存任务不存在' };
+  });
+
+  router.post('/chapter-cache/job/stop', (ctx) => {
+    const jobId = (ctx.request.body as { jobId?: string } | undefined)?.jobId;
+    if (!jobId) {
+      ctx.body = { code: -1, data: null, msg: '缓存任务 ID 不能为空' };
+      return;
+    }
+    const stopped = stopChapterCacheJob(jobId);
+    ctx.body = stopped ? { code: 0, data: true, msg: '' } : { code: -1, data: null, msg: '缓存任务不存在' };
   });
 
   router.post('/install', (ctx) => {
