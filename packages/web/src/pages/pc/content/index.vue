@@ -3,6 +3,7 @@
     <div
       id="text-container"
       class="relative flex flex-1 flex-col overflow-hidden whitespace-pre-wrap break-words p-10 text-[#b3b3b3] lh-1.5em"
+      :class="{ 'epub-reader': isLocalEpub }"
       :style="{
         fontSize: settingStore.data.readStyle.fontSize + 'px',
         letterSpacing: settingStore.data.readStyle.letterSpacing + 'px'
@@ -197,6 +198,7 @@ const chaptersStore = useChaptersStore();
 const favoritesStore = useFavoritesStore();
 const readStore = useReadStore();
 const route = useRoute();
+const isLocalEpub = computed(() => !route.query.ruleId && /\.epub$/i.test(String(route.query.filePath || '')));
 
 const chaptersVisible = ref(false);
 const readerControlsVisible = ref(false);
@@ -364,6 +366,10 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
   margin-bottom: calc(var(--section-spacing) * 1px);
   font-weight: var(--font-weight);
   opacity: var(--text-opacity);
+}
+
+.epub-reader .center-row {
+  white-space: normal !important;
 }
 
 .reader-pages-wrap--paged {
