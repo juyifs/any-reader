@@ -1,14 +1,8 @@
 <template>
-  <a-button @click="open = true">缓存管理</a-button>
-  <a-modal
-    v-model:open="open"
-    title="章节缓存"
-    width="680px"
-    :footer="null"
-    :mask-closable="!running"
-    :closable="!running"
-    @after-open-change="onOpenChange"
-  >
+  <a-button @click="open = true">
+    {{ running ? `缓存管理 ${completed}/${total}` : '缓存管理' }}
+  </a-button>
+  <a-modal v-model:open="open" title="章节缓存" width="680px" :footer="null" :mask-closable="true" :closable="true" @after-open-change="onOpenChange">
     <div class="mb-12">
       <a-radio-group v-model:value="destination" :disabled="running" @change="loadCacheList">
         <a-radio-button value="browser">当前浏览器</a-radio-button>
@@ -29,7 +23,10 @@
     <div v-if="running" class="mb-12">
       <div class="mb-6 flex items-center justify-between">
         <span>{{ progressText }}</span>
-        <a-button size="small" @click="cancel">取消任务</a-button>
+        <div class="flex gap-8">
+          <a-button size="small" @click="open = false">隐藏到后台</a-button>
+          <a-button size="small" @click="cancel">取消任务</a-button>
+        </div>
       </div>
       <a-progress :percent="progressPercent" :status="errorMessage ? 'exception' : 'active'" />
       <div v-if="currentChapterName" class="mt-4 text-12 op-70">{{ currentChapterName }}</div>
