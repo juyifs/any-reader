@@ -378,7 +378,10 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     if (percentage && contentRef.value) {
       if (contentRef.value.classList.contains('reader-paged-container')) {
         const maxScrollLeft = contentRef.value.scrollWidth - contentRef.value.clientWidth;
-        contentRef.value.scrollLeft = maxScrollLeft * (+percentage / 100000);
+        const pageWidth = contentRef.value.clientWidth;
+        const targetScrollLeft = maxScrollLeft * (+percentage / 100000);
+        const pageIndex = Math.round(targetScrollLeft / pageWidth);
+        contentRef.value.scrollLeft = Math.min(maxScrollLeft, pageIndex * pageWidth);
       } else {
         const scrollTop = contentRef.value.scrollHeight * (+percentage / 100000);
         contentRef.value.scrollTop = scrollTop;

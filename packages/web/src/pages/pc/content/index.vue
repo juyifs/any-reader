@@ -243,13 +243,18 @@ const pageTurnMode = computed(() =>
 );
 useTheme(contentRef);
 
-useResizeObserver(contentRef, ([entry]) => {
-  const element = entry.target as HTMLElement;
+function updateReaderPageSize() {
+  const element = contentRef.value as HTMLElement | undefined;
+  if (!element) return;
   const style = getComputedStyle(element);
   const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-  const pageWidth = Math.max(0, entry.contentRect.width);
+  const pageWidth = Math.max(0, element.clientWidth - horizontalPadding);
   element.style.setProperty('--reader-page-width', `${pageWidth}px`);
   element.style.setProperty('--reader-page-gap', `${horizontalPadding}px`);
+}
+
+useResizeObserver(contentRef, () => {
+  updateReaderPageSize();
   requestAnimationFrame(updateReaderPagesEnd);
 });
 
@@ -257,6 +262,7 @@ watch(
   [content, pageTurnMode, () => settingStore.data.readStyle],
   async () => {
     await nextTick();
+    updateReaderPageSize();
     if (pageTurnMode.value === 'tap') {
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
