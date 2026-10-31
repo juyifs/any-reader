@@ -10,6 +10,7 @@ export interface BookInfo {
   name?: string;
   author?: string;
   cover?: string;
+  description?: string;
 }
 
 export interface IBookParser {

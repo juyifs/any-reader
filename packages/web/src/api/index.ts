@@ -1,4 +1,5 @@
 export * from './modules/bookshelf';
+export * from './modules/book-metadata';
 export * from './modules/chapter-history';
 export * from './modules/annotations';
 export * from './modules/config';

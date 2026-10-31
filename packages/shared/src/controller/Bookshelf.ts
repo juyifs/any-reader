@@ -2,6 +2,7 @@ import { openExplorer } from 'explorer-opener';
 import { Controller, Post } from '../decorators';
 import { getBookList } from '../utils/book-manager';
 import type { BookInfo } from '../utils/BookParser/types';
+import { applyBookMetadata } from '../utils/book-metadata';
 import { BaseController } from './BaseController';
 
 const isElectron = typeof process !== 'undefined' && process.versions && process.versions.electron;
@@ -11,7 +12,7 @@ export class Bookshelf extends BaseController {
   @Post('list')
   async read() {
     const books = await getBookList(this.app.config.bookDir);
-    return await Promise.all(
+    const bookList = await Promise.all(
       books.map(async (book) => {
         let info: BookInfo = {};
         try {
@@ -22,11 +23,22 @@ export class Bookshelf extends BaseController {
         return {
           name: info?.name || book.name,
           author: info?.author || '',
+          description: info?.description || '',
           path: book.path,
-          cover: info?.cover
+          url: book.path,
+          ruleId: '',
+          cover: info?.cover || ''
         };
       })
     );
+    const metadata = await this.db.getBookMetadata().list();
+    return applyBookMetadata(bookList, metadata).map((book) => ({
+      name: book.name,
+      author: book.author,
+      description: book.description,
+      path: book.path,
+      cover: book.cover
+    }));
   }
 
   // vscode, desktop

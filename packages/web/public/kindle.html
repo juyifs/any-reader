@@ -159,6 +159,23 @@
         font-weight: bold;
       }
 
+      .book-author,
+      .book-description {
+        display: block;
+        margin-top: 4px;
+        overflow: hidden;
+        font-size: 0.75em;
+        line-height: 1.3;
+        text-overflow: ellipsis;
+      }
+
+      .book-description {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        white-space: normal;
+      }
+
       .book button {
         margin-top: 4px;
         padding: 7px 10px;
@@ -731,6 +748,18 @@
           details.className = 'book-details';
           link.className = 'book-title';
           details.appendChild(link);
+          if (book.author) {
+            var author = document.createElement('span');
+            author.className = 'book-author';
+            author.textContent = book.author;
+            details.appendChild(author);
+          }
+          if (book.description) {
+            var description = document.createElement('span');
+            description.className = 'book-description';
+            description.textContent = book.description;
+            details.appendChild(description);
+          }
           row.appendChild(details);
           list.appendChild(row);
         }

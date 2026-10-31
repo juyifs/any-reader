@@ -9,7 +9,8 @@ export default class EPubBookParser extends BaseBookParser implements IBookParse
       book.on('end', () => {
         const info: BookInfo = {
           name: book.metadata.title || undefined,
-          author: book.metadata.creator || undefined
+          author: book.metadata.creator || undefined,
+          description: book.metadata.description || undefined
         };
         const coverId =
           book.metadata['cover-image'] ||
