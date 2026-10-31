@@ -23,6 +23,10 @@ import { filterNovelContent } from '@/utils/contentFilter';
 const chapterContentCache = new Map<string, Promise<ContentResponse>>();
 const MAX_CACHED_CHAPTERS = 3;
 
+function waitForLayoutFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
 function getChapterCacheKey(params: Record<string, any>, chapterPath: string) {
   return JSON.stringify([params.ruleId || '', params.filePath || '', chapterPath]);
 }
@@ -366,6 +370,10 @@ export function useContent(contentRef: Ref<HTMLElement>) {
 
     // 确保内容已经渲染完成后再设置滚动位置
     await nextTick();
+    if (contentRef.value?.classList.contains('reader-paged-container')) {
+      await waitForLayoutFrame();
+      await waitForLayoutFrame();
+    }
 
     if (percentage && contentRef.value) {
       if (contentRef.value.classList.contains('reader-paged-container')) {

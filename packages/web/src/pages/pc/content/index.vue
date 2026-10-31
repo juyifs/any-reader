@@ -247,13 +247,24 @@ useResizeObserver(contentRef, ([entry]) => {
   const element = entry.target as HTMLElement;
   const style = getComputedStyle(element);
   const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-  const pageWidth = Math.max(0, element.clientWidth - horizontalPadding);
+  const pageWidth = Math.max(0, entry.contentRect.width);
   element.style.setProperty('--reader-page-width', `${pageWidth}px`);
   element.style.setProperty('--reader-page-gap', `${horizontalPadding}px`);
-  nextTick(updateReaderPagesEnd);
+  requestAnimationFrame(updateReaderPagesEnd);
 });
 
-watch([content, pageTurnMode, () => settingStore.data.readStyle], () => nextTick(updateReaderPagesEnd), { deep: true, flush: 'post' });
+watch(
+  [content, pageTurnMode, () => settingStore.data.readStyle],
+  async () => {
+    await nextTick();
+    if (pageTurnMode.value === 'tap') {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+    updateReaderPagesEnd();
+  },
+  { deep: true, flush: 'post' }
+);
 
 function updateReaderPagesEnd() {
   if (pageTurnMode.value !== 'tap' || !contentRef.value || !readerPagesRef.value) return;
