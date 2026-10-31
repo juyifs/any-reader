@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import iconv from 'iconv-lite';
 import chardet from 'chardet';
-import type { BookChapter, IBookParser } from '../types';
+import type { BookChapter, BookInfo, IBookParser } from '../types';
 import { BaseBookParser } from './BaseBookParser';
 
 export default class TXTBookParser extends BaseBookParser implements IBookParser {
@@ -14,6 +14,10 @@ export default class TXTBookParser extends BaseBookParser implements IBookParser
     const encoding = chardet.detect(sourceFile as Uint8Array);
     const text = iconv.decode(sourceFile, encoding as string);
     return text;
+  }
+
+  async getBookInfo(): Promise<BookInfo> {
+    return {};
   }
 
   async getChapter(): Promise<BookChapter[]> {

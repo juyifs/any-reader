@@ -6,7 +6,18 @@ export interface BookChapter {
   spineIndex?: number;
 }
 
+export interface BookInfo {
+  name?: string;
+  author?: string;
+  cover?: string;
+}
+
 export interface IBookParser {
+  /**
+   * 获取书籍元数据
+   */
+  getBookInfo(): Promise<BookInfo>;
+
   /**
    * 获取章节
    */
