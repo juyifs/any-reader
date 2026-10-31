@@ -344,8 +344,8 @@ useBus(EVENT_CHAPTERS_BOX).on(showChapters);
 }
 
 :deep(p) {
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 :deep(img) {
   max-width: 100%;
