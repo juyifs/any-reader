@@ -16,6 +16,8 @@ export class TTS {
   private _onVisibilityChange: () => void;
   private isFirstItem = true;
   private destroyed = false;
+  private shouldPlay = true;
+  private playbackBlocked = false;
   container: HTMLElement;
   private _onEnd: () => void;
 
@@ -57,8 +59,9 @@ export class TTS {
     const row = this.speakData[this.idx - 1];
     row?.node.classList.remove('color-red');
     this.destroyed = true;
+    this.shouldPlay = false;
     this.idx = -1;
-    this.audioEl.pause();
+    if (!this.audioEl.ended) this.audioEl.pause();
     this.audioEl.removeEventListener('ended', this._ended);
     document.removeEventListener('visibilitychange', this._onVisibilityChange);
     window.removeEventListener('pageshow', this._onVisibilityChange);
@@ -67,13 +70,27 @@ export class TTS {
 
   startOrStop() {
     if (this.audioEl.paused) {
-      this.audioEl.play().catch((error) => {
-        console.error('朗读音频播放失败', error);
-      });
+      this.playAudio();
     } else {
+      this.shouldPlay = false;
       this.audioEl.pause();
+      this.playbackBlocked = false;
     }
     return !this.audioEl.paused;
+  }
+
+  private playAudio() {
+    this.shouldPlay = true;
+    this.playbackBlocked = false;
+    this.audioEl.play().then(
+      () => {
+        this.playbackBlocked = false;
+      },
+      (error) => {
+        this.playbackBlocked = this.shouldPlay;
+        console.error('朗读音频播放失败', error);
+      }
+    );
   }
 
   ended() {
@@ -173,9 +190,7 @@ export class TTS {
       return;
     }
     this.audioEl.src = ('data:audio/mp3;base64,' + row.base64) as string;
-    this.audioEl.play().catch((error) => {
-      console.error('朗读音频播放失败', error);
-    });
+    this.playAudio();
     this.followReadingPosition(row.node);
     this.getTTS(this.idx + 5);
   }
@@ -241,6 +256,10 @@ export class TTS {
 
   private handleVisibilityChange() {
     if (document.visibilityState !== 'visible') return;
+
+    if (this.playbackBlocked && this.shouldPlay && this.audioEl.paused && !this.destroyed) {
+      this.playAudio();
+    }
 
     const row = this.speakData[this.idx - 1];
     if (row) {

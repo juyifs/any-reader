@@ -398,7 +398,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
 
     // 确保内容已经渲染完成后再设置滚动位置
     await nextTick();
-    if (contentRef.value?.classList.contains('reader-paged-container')) {
+    if (contentRef.value?.classList.contains('reader-paged-container') && !ttsStatus.value) {
       await waitForLayoutFrame();
       await waitForLayoutFrame();
     }
