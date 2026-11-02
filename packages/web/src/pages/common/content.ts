@@ -13,7 +13,7 @@ import { useChaptersStore } from '@/stores/chapters';
 import { useSettingStore, type ReadStyle } from '@/stores/setting';
 import { useReadStore } from '@/stores/read';
 import { useKeyboardShortcuts } from '@/hooks/useMagicKeys';
-import { TTS } from '@/utils/tts';
+import { preloadTTSContent, TTS } from '@/utils/tts';
 import { base64 } from '@/api/modules/tts';
 import { executeCommand } from '@/api/modules/vsc';
 import { IS_BROWSER } from '@/constants';
@@ -300,6 +300,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
 
   function toggleTTS() {
     ttsStatus.value = tts.startOrStop();
+    if (ttsStatus.value) preloadNextChapterTTS();
   }
 
   function stopTTS() {
@@ -341,6 +342,34 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     cacheChapterContent(key, params, String(route.query.ruleId || '')).catch((error) => {
       console.error('章节预加载失败', error);
     });
+  }
+
+  function preloadNextChapterTTS() {
+    const nextPath = nextChapter.value;
+    if (!ttsStatus.value || !nextPath) return;
+
+    const params = { ...route.query, chapterPath: nextPath };
+    const key = getChapterCacheKey(params, nextPath);
+    void cacheChapterContent(key, params, String(route.query.ruleId || ''))
+      .then((chapter) => {
+        if (!ttsStatus.value || nextChapter.value !== nextPath) return;
+        if (
+          chapter.contentType === ContentType.MANGA ||
+          chapter.contentType === ContentType.VIDEO ||
+          chapter.contentType === ContentType.AUDIO
+        ) {
+          return;
+        }
+
+        const content =
+          chapter.contentType === ContentType.NOVEL || chapter.contentType === ContentType.NOVELMORE
+            ? filterNovelContent(chapter.content, settingStore.data.contentFilters)
+            : chapter.content;
+        tts.preloadContent(content);
+      })
+      .catch((error) => {
+        console.error('下一章正文预加载失败，无法预取朗读音频', error);
+      });
   }
 
   /**
@@ -389,6 +418,7 @@ export function useContent(contentRef: Ref<HTMLElement>) {
     }
     if (nextChapter.value) {
       preload(nextChapter.value);
+      if (ttsStatus.value) preloadNextChapterTTS();
     }
     if (chapter) {
       const { contentType: _contentType, content: _content } = chapter;
@@ -557,6 +587,8 @@ export function useTTS(contentRef: Ref<HTMLElement>, ended: () => void) {
 
   const route = useRoute();
   const settingStore = useSettingStore();
+  const speakText = (text: string) => base64({ text, settings: { ...settingStore.data.tts } }).then((e) => e.data);
+  const getCacheScope = () => JSON.stringify(settingStore.data.tts);
 
   /**
    * 销毁TTS实例
@@ -582,18 +614,15 @@ export function useTTS(contentRef: Ref<HTMLElement>, ended: () => void) {
    * 开始TTS
    */
   function start() {
-    tts = new TTS(
-      contentRef.value,
-      (text: string) => {
-        return base64({ text, settings: { ...settingStore.data.tts } }).then((e) => e.data);
-      },
-      ended
-    );
+    tts = new TTS(contentRef.value, speakText, getCacheScope, ended);
   }
 
   return {
     start,
     destroy,
+    preloadContent(content: string[]) {
+      preloadTTSContent(content, speakText, getCacheScope());
+    },
     startOrStop() {
       if (!tts) {
         start();

@@ -14,9 +14,98 @@ interface SpeakBatch {
 
 const MAX_BATCH_ITEMS = 3;
 const MAX_BATCH_TEXT_LENGTH = 1000;
+const MAX_CACHED_AUDIOS = 12;
+
+type SpeakText = (text: string) => Promise<string>;
+
+const audioCache = new WeakMap<SpeakText, Map<string, Promise<string>>>();
+
+function getCachedAudio(speakText: SpeakText, text: string, cacheScope: string) {
+  let cache = audioCache.get(speakText);
+  if (!cache) {
+    cache = new Map();
+    audioCache.set(speakText, cache);
+  }
+
+  const key = JSON.stringify([cacheScope, text]);
+  const existing = cache.get(key);
+  if (existing) {
+    cache.delete(key);
+    cache.set(key, existing);
+    return existing;
+  }
+
+  const audio = speakText(text);
+  cache.set(key, audio);
+  if (cache.size > MAX_CACHED_AUDIOS) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey) cache.delete(oldestKey);
+  }
+  void audio.catch(() => {
+    if (cache?.get(key) === audio) cache.delete(key);
+  });
+  return audio;
+}
+
+function getSpeakBatchTexts(items: string[]) {
+  const batches: string[] = [];
+  let batchItems: string[] = [];
+  let batchTextLength = 0;
+
+  const saveBatch = () => {
+    if (!batchItems.length) return;
+    batches.push(batchItems.join('\n'));
+    batchItems = [];
+    batchTextLength = 0;
+  };
+
+  for (const item of items) {
+    if (!item) continue;
+    if (batchItems.length && (batchItems.length >= MAX_BATCH_ITEMS || batchTextLength + item.length > MAX_BATCH_TEXT_LENGTH)) {
+      saveBatch();
+    }
+    batchItems.push(item);
+    batchTextLength += item.length;
+  }
+  saveBatch();
+  return batches;
+}
+
+function collectSpeakTexts(element: HTMLElement, texts: string[]) {
+  if (element.tagName === 'BUTTON') return;
+  if (element.childNodes.length) {
+    if (element.childNodes.length === 1 && element.childNodes[0].nodeType === Node.TEXT_NODE) {
+      if (element.innerText) texts.push(element.innerText);
+      return;
+    }
+    for (const node of element.childNodes) {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        collectSpeakTexts(node as HTMLElement, texts);
+      }
+    }
+    return;
+  }
+  if (element.innerText && !['SCRIPT', 'STYLE'].includes(element.tagName)) texts.push(element.innerText);
+}
+
+export function preloadTTSContent(content: string[], speakText: SpeakText, cacheScope: string) {
+  const texts: string[] = [];
+  for (const html of content) {
+    const element = document.createElement('div');
+    element.innerHTML = html;
+    collectSpeakTexts(element, texts);
+  }
+  const firstBatch = getSpeakBatchTexts(texts)[0];
+  if (firstBatch) {
+    void getCachedAudio(speakText, firstBatch, cacheScope).catch((error) => {
+      console.error('下一章朗读音频预加载失败', error);
+    });
+  }
+}
 
 export class TTS {
-  private speakText: (text: string) => Promise<string>;
+  private speakText: SpeakText;
+  private getCacheScope: () => string;
   private speakData: SpeakBatch[];
   private idx = -1;
   private audioEl!: HTMLMediaElement;
@@ -30,11 +119,12 @@ export class TTS {
   container: HTMLElement;
   private _onEnd: () => void;
 
-  constructor(selector: string | HTMLElement, speakText: (text: string) => Promise<string>, onEnd: () => void) {
+  constructor(selector: string | HTMLElement, speakText: SpeakText, getCacheScope: () => string, onEnd: () => void) {
     this._ended = this.ended.bind(this);
     this._onTimeUpdate = this.handleTimeUpdate.bind(this);
     this._onVisibilityChange = this.handleVisibilityChange.bind(this);
     this._onEnd = onEnd;
+    this.getCacheScope = getCacheScope;
     this.createAudio();
     document.addEventListener('visibilitychange', this._onVisibilityChange);
     window.addEventListener('pageshow', this._onVisibilityChange);
@@ -191,7 +281,7 @@ export class TTS {
     if (idx >= this.speakData.length || idx > this.idx + 5 || this.destroyed) return;
 
     const batch = this.speakData[idx];
-    batch.audio ||= this.speakText(batch.text).then((base64) => {
+    batch.audio ||= getCachedAudio(this.speakText, batch.text, this.getCacheScope()).then((base64) => {
       batch.base64 = base64;
       return base64;
     });
