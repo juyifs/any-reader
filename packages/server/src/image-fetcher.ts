@@ -3,8 +3,13 @@ import { isIP } from 'node:net';
 
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 const MAX_IMAGE_REDIRECTS = 5;
+const GENERIC_IMAGE_CONTENT_TYPES = new Set(['', 'application/octet-stream', 'binary/octet-stream']);
 
 export class InvalidImageRefererError extends Error {}
+
+function isWebp(data: Buffer) {
+  return data.length >= 12 && data.toString('ascii', 0, 4) === 'RIFF' && data.toString('ascii', 8, 12) === 'WEBP';
+}
 
 function isPrivateIpv4(address: string) {
   const octets = address.split('.').map(Number);
@@ -86,8 +91,9 @@ export async function fetchPublicImage(imageUrl: string, suppliedHeaders: Record
   }
 
   if (!response?.ok) throw new Error(`图片服务器返回 ${response?.status ?? '未知状态'}`);
-  const contentType = response.headers.get('content-type') || '';
-  if (!contentType.toLowerCase().startsWith('image/')) throw new Error('目标资源不是图片');
+  const responseContentType = response.headers.get('content-type') || '';
+  const contentType = responseContentType.split(';', 1)[0].trim().toLowerCase();
+  if (!contentType.startsWith('image/') && !GENERIC_IMAGE_CONTENT_TYPES.has(contentType)) throw new Error('目标资源不是图片');
   const contentLength = Number(response.headers.get('content-length'));
   if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_SIZE) throw new Error('图片文件过大');
 
@@ -105,5 +111,10 @@ export async function fetchPublicImage(imageUrl: string, suppliedHeaders: Record
     }
     chunks.push(value);
   }
-  return { data: Buffer.concat(chunks), contentType };
+  const data = Buffer.concat(chunks);
+  if (GENERIC_IMAGE_CONTENT_TYPES.has(contentType)) {
+    if (!isWebp(data)) throw new Error('目标资源不是图片');
+    return { data, contentType: 'image/webp' };
+  }
+  return { data, contentType };
 }
