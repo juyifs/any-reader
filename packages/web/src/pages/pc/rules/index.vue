@@ -27,6 +27,7 @@
             <a-menu-divider />
             <a-menu-item @click="addRuleUrl">从文本导入</a-menu-item>
             <a-menu-item @click="addRuleUrl">从URL导入</a-menu-item>
+            <a-menu-item @click="addLegadoSource">阅读3.0书源转换</a-menu-item>
             <a-menu-divider />
             <a-menu-item @click="addRule">单个添加</a-menu-item>
             <a-menu-divider />
@@ -119,6 +120,7 @@ import { timeoutWith } from '@/utils/promise';
 import { useDropRules } from '@/hooks/useDropRules';
 import ImportRules from './ImportRules.vue';
 import ImportCMS from './ImportCMS.vue';
+import ImportLegado from './ImportLegado.vue';
 import RuleInfo from '@/pages/pc/rule-info/index.vue';
 
 const { modal, message } = App.useApp();
@@ -386,6 +388,33 @@ function addCMS() {
           message.success({
             content: `导入${count}条数据`
           });
+          m.destroy();
+        }}
+      />
+    )
+  });
+}
+
+function addLegadoSource() {
+  const m = modal.confirm({
+    mask: true,
+    closable: true,
+    width: 600,
+    footer: false,
+    title: '阅读 3.0 书源转换',
+    content: (
+      <ImportLegado
+        onDone={(count = 0, failures = []) => {
+          rulesStore.sync();
+          if (failures.length) {
+            message.warning({
+              content: `成功导入 ${count} 条；以下书源导入失败：${failures.join('、')}`
+            });
+          } else {
+            message.success({
+              content: `导入${count}条数据`
+            });
+          }
           m.destroy();
         }}
       />

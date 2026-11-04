@@ -50,6 +50,12 @@ outline: deep
 
 章节列表规则可通过 `chapterDescription` 从目录页提取书籍简介。它使用取内容规则语法，输入内容是 `chapterUrl` 请求返回的页面；未配置时页面仍使用搜索或发现结果中的简介。
 
+## 转换阅读 3.0 书源
+
+规则管理页面的“添加规则”菜单支持“阅读3.0书源转换”。粘贴阅读 3.0 导出的书源 JSON（单条或数组）即可转换并导入。本功能主要转换搜索、发现、目录和正文中的常用字段及选择器；阅读 3.0 的详情页额外请求、主脚本、图片解密等功能无法一一对应，转换预览会列出需要手动检查的项目。
+
+书源字段结构可参考 [阅读 3.0 书源项目](https://github.com/gedoor/legado)及其[书源数据结构](https://github.com/LegadoTeam/legado/blob/master/app/src/main/java/io/legado/app/data/entities/BookSource.kt)。
+
 ## 规则字段类型
 
 ### URL地址规则
