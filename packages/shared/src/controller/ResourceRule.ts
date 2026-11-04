@@ -1,4 +1,5 @@
 import { Controller, Post } from '../decorators';
+import { cacheUtils } from '../decorators/cache';
 import { BaseController } from './BaseController';
 
 @Controller('/resource-rule')
@@ -28,8 +29,11 @@ export class ResourceRule extends BaseController {
 
   // 删除
   @Post('remove-by-id')
-  removeById(arg: any) {
-    return this.db.getResourceRule().removeById(arg.id);
+  async removeById(arg: any) {
+    const ids = Array.isArray(arg.id) ? arg.id : [arg.id];
+    const result = await this.db.getResourceRule().removeById(arg.id);
+    await Promise.all(ids.map((id) => cacheUtils.removeItem(`discoverMap@${id}`)));
+    return result;
   }
 
   @Post('import-cms')
@@ -43,10 +47,12 @@ export class ResourceRule extends BaseController {
   }
 
   @Post('batch-update')
-  batchUpdateRules({ ids, rule }: { ids: number[]; rule: any }) {
-    return this.db.getResourceRule().repository.update(ids, {
+  async batchUpdateRules({ ids, rule }: { ids: string[]; rule: any }) {
+    const result = await this.db.getResourceRule().repository.update(ids, {
       ...rule
     });
+    await Promise.all(ids.map((id) => cacheUtils.removeItem(`discoverMap@${id}`)));
+    return result;
   }
 
   @Post('ping')

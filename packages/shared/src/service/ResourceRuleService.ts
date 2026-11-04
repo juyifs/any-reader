@@ -4,6 +4,7 @@ import { cmsJsonToRule, cmsXmlToRule, text2rules } from '@any-reader/rule-utils'
 import type { ResourceRule } from '../entity/ResourceRule';
 import type { RuleExtra } from '../entity/RuleExtra';
 import ping from '../utils/ping';
+import { cacheUtils } from '../decorators/cache';
 
 // function getCols<T extends object>(repository: Repository<T>): (keyof T)[] {
 //   return (repository.metadata.columns.map(col => col.propertyName) as (keyof T)[])
@@ -64,15 +65,19 @@ export class ResourceRuleService {
       Object.assign(entity, data, {
         modifiedTime: Date.now()
       });
-      return await this.repository.save(entity);
+      const saved = await this.repository.save(entity);
+      await cacheUtils.removeItem(`discoverMap@${saved.id}`);
+      return saved;
     } else {
       const now = Date.now();
       const entity = this.repository.create({
         ...data,
         createTime: now,
         modifiedTime: now
-      });
-      return await this.repository.save(entity);
+      } as ResourceRule);
+      const saved = await this.repository.save(entity);
+      await cacheUtils.removeItem(`discoverMap@${saved.id}`);
+      return saved;
     }
   }
 

@@ -78,7 +78,7 @@
     </a-float-button-group>
 
     <a-drawer v-model:open="ruleInfoVisible" width="100%" title="编辑规则" placement="right" :get-container="false" :closable="false">
-      <RuleInfo v-if="ruleInfoVisible" :rule-id="ruleId" @close="ruleInfoVisible = false" />
+      <RuleInfo v-if="ruleInfoVisible" :rule-id="ruleId" @close="closeRuleInfo" />
     </a-drawer>
   </div>
 </template>
@@ -181,6 +181,11 @@ async function changeRule(id: string) {
   loading.value = false;
 }
 
+function closeRuleInfo() {
+  ruleInfoVisible.value = false;
+  if (ruleId.value) void changeRule(ruleId.value);
+}
+
 let activated = true;
 watch(
   ruleListDisplay,
@@ -195,7 +200,9 @@ watch(
 );
 
 onActivated(() => {
+  const wasDeactivated = !activated;
   activated = true;
+  if (wasDeactivated && ruleId.value) void changeRule(ruleId.value);
 });
 onDeactivated(() => {
   activated = false;
