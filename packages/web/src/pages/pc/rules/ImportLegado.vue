@@ -9,16 +9,16 @@
     />
     <a-alert v-if="error" class="mb-10" type="error" show-icon :message="error" />
     <template v-if="conversions.length">
-      <a-alert
-        class="mb-10"
-        type="info"
-        show-icon
-        :message="`已转换 ${conversions.length} 条书源；复杂 JavaScript、详情页和图片解密规则可能需要手动调整。`"
-      />
+      <div
+        role="status"
+        class="conversion-notice mb-10 border border-[--ar-color-border] rounded-6 border-solid bg-[--ar-color-primary-bg] px-12 py-10 text-[--ar-color-text]"
+      >
+        已转换 {{ conversions.length }} 条书源；复杂 JavaScript、详情页和图片解密规则可能需要手动调整。
+      </div>
       <div class="mb-10 max-h-180 overflow-auto">
         <div v-for="(conversion, index) in conversions" :key="conversion.rule.id" class="mb-8">
-          <div class="font-600">{{ conversion.rule.name || `未命名书源 ${index + 1}` }}</div>
-          <div v-for="warning in conversion.warnings" :key="warning" class="text-12 op-70">- {{ warning }}</div>
+          <div class="text-[--ar-color-text] font-600">{{ conversion.rule.name || `未命名书源 ${index + 1}` }}</div>
+          <div v-for="warning in conversion.warnings" :key="warning" class="text-12 text-[--ar-color-text-secondary]">- {{ warning }}</div>
         </div>
       </div>
     </template>
@@ -92,3 +92,9 @@ async function importConverted() {
   emit('done', count, []);
 }
 </script>
+
+<style scoped>
+.conversion-notice {
+  color: var(--ar-color-text);
+}
+</style>
