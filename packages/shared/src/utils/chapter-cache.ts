@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import { promises as fs } from 'node:fs';
+import { constants as fsConstants, promises as fs } from 'node:fs';
+import type { Dirent } from 'node:fs';
 import path from 'node:path';
 import md5 from 'blueimp-md5';
 import type { ContentResponse } from '@any-reader/rule-utils';
-import { CACHE_DIR } from '../constants';
+import { CACHE_DIR, CHAPTER_CACHE_DIR } from '../constants';
 
-const CHAPTER_CACHE_DIR = path.join(CACHE_DIR, 'chapters');
+const LEGACY_CHAPTER_CACHE_DIR = path.join(CACHE_DIR, 'chapters');
 const MAX_CHAPTER_CACHE_BYTES = 50 * 1024 * 1024;
+let chapterCacheStoragePromise: Promise<void> | undefined;
 
 export interface ChapterCacheIdentity {
   ruleId: string;
@@ -31,7 +33,43 @@ function matchesBook(record: ChapterCacheRecord, identity: ChapterCacheIdentity)
   return record.ruleId === identity.ruleId && record.url === identity.url;
 }
 
+async function migrateLegacyChapterCache() {
+  await fs.mkdir(CHAPTER_CACHE_DIR, { recursive: true });
+
+  let entries: Dirent[];
+  try {
+    entries = await fs.readdir(LEGACY_CHAPTER_CACHE_DIR, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
+    throw error;
+  }
+
+  for (const entry of entries) {
+    if (!entry.isFile()) throw new Error(`无法迁移章节缓存中的非文件项目: ${entry.name}`);
+    const source = path.join(LEGACY_CHAPTER_CACHE_DIR, entry.name);
+    const destination = path.join(CHAPTER_CACHE_DIR, entry.name);
+    try {
+      await fs.copyFile(source, destination, fsConstants.COPYFILE_EXCL);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
+    }
+    await fs.unlink(source);
+  }
+  await fs.rmdir(LEGACY_CHAPTER_CACHE_DIR);
+}
+
+export async function ensureChapterCacheStorage() {
+  if (!chapterCacheStoragePromise) {
+    chapterCacheStoragePromise = migrateLegacyChapterCache().catch((error) => {
+      chapterCacheStoragePromise = undefined;
+      throw error;
+    });
+  }
+  await chapterCacheStoragePromise;
+}
+
 export async function getChapterCache(identity: ChapterCacheIdentity, chapterPath: string): Promise<ChapterCacheRecord | undefined> {
+  await ensureChapterCacheStorage();
   const file = getCacheFile(identity, chapterPath);
   try {
     const record = JSON.parse(await fs.readFile(file, 'utf8')) as ChapterCacheRecord;
@@ -43,6 +81,7 @@ export async function getChapterCache(identity: ChapterCacheIdentity, chapterPat
 }
 
 export async function listChapterCache(identity: ChapterCacheIdentity): Promise<Omit<ChapterCacheRecord, 'content' | 'assets'>[]> {
+  await ensureChapterCacheStorage();
   let files: string[];
   try {
     files = await fs.readdir(CHAPTER_CACHE_DIR);
@@ -71,6 +110,7 @@ export async function listChapterCache(identity: ChapterCacheIdentity): Promise<
 }
 
 export async function saveChapterCache(record: Omit<ChapterCacheRecord, 'updatedAt'>): Promise<ChapterCacheRecord> {
+  await ensureChapterCacheStorage();
   if (!record.ruleId || !record.url || !record.chapterPath) throw new Error('书源、书籍和章节信息不能为空');
   if (!Number.isInteger(record.chapterIndex) || record.chapterIndex < 0 || !record.chapterName) throw new Error('章节元数据无效');
   if (!Array.isArray(record.content?.content) || !record.assets || typeof record.assets !== 'object') throw new Error('章节缓存数据格式无效');
@@ -93,6 +133,7 @@ export async function saveChapterCache(record: Omit<ChapterCacheRecord, 'updated
 }
 
 export async function deleteChapterCache(identity: ChapterCacheIdentity, chapterPath?: string): Promise<number> {
+  await ensureChapterCacheStorage();
   const records = chapterPath ? [{ chapterPath }] : await listChapterCache(identity);
   let removed = 0;
   for (const record of records) {

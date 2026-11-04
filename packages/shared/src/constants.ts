@@ -13,6 +13,8 @@ export const FAVORITES_PATH = path.join(ROOT_PATH, 'favorites.json');
 export const LOCAL_BOOK_DIR = path.join(ROOT_PATH, 'local-book');
 // 缓存目录
 export const CACHE_DIR = path.join(ROOT_PATH, 'cache');
+// 章节缓存目录
+export const CHAPTER_CACHE_DIR = path.join(ROOT_PATH, 'chapter-cache');
 // 规则扩展数据
 export const RULE_EXTRA_PATH = path.join(ROOT_PATH, 'source.extra.json');
 // 数据库路径

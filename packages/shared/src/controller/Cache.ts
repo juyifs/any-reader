@@ -3,25 +3,15 @@ import path from 'path';
 import { Controller, Post } from '../decorators';
 import { BaseController } from './BaseController';
 import { CACHE_DIR } from '../constants';
+import { ensureChapterCacheStorage } from '../utils/chapter-cache';
 
 @Controller('/cache')
 export class Cache extends BaseController {
   @Post('clear')
   async clear() {
-    const dirs = (await fs.readdir(CACHE_DIR))
-      .map((file) => path.resolve(CACHE_DIR, file))
-      .filter(async (dir) => {
-        const stat = await fs.stat(dir);
-        return stat?.isDirectory();
-      });
-    for (const dir of dirs) {
-      await fs
-        .rmdir(dir, {
-          recursive: true
-        })
-        .catch((err) => {
-          console.warn(err);
-        });
-    }
+    await ensureChapterCacheStorage();
+    await fs.mkdir(CACHE_DIR, { recursive: true });
+    const entries = await fs.readdir(CACHE_DIR);
+    await Promise.all(entries.map((entry) => fs.rm(path.join(CACHE_DIR, entry), { recursive: true, force: true })));
   }
 }
