@@ -1,4 +1,7 @@
+import { message } from 'ant-design-vue';
 import { getFavorites, star as _star, unstar as _unstar } from '@/api';
+import { deleteServerChapterCache } from '@/api/modules/chapter-cache';
+import { deleteBrowserChapterCache } from '@/utils/chapterCache';
 
 export interface FavoriteRow {
   ruleId: string;
@@ -30,16 +33,29 @@ export const useFavoritesStore = defineStore('favorites', () => {
   // 收藏 | 取消收藏
   async function star(row: any) {
     if (starred(row)) {
-      await _unstar(row);
+      await unstar(row);
     } else {
       await _star(row);
+      await sync();
     }
-    await sync();
   }
 
   async function unstar(row: any) {
     await _unstar(row);
     await sync();
+
+    const identity = { ruleId: row.ruleId, url: row.url };
+    const results = await Promise.allSettled([
+      deleteBrowserChapterCache(identity),
+      deleteServerChapterCache(identity).then((result) => {
+        if (result?.code !== 0) throw new Error(result?.msg || '服务器章节缓存删除失败');
+      })
+    ]);
+    const errors = results.flatMap((result) => (result.status === 'rejected' ? [result.reason] : []));
+    if (errors.length) {
+      console.error('取消收藏后的章节缓存清理失败', errors);
+      message.error('已取消收藏，但部分章节缓存删除失败，请在章节缓存管理中重试');
+    }
   }
 
   return {
