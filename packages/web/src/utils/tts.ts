@@ -15,10 +15,22 @@ interface SpeakBatch {
 const MAX_BATCH_ITEMS = 3;
 const MAX_BATCH_TEXT_LENGTH = 1000;
 const MAX_CACHED_AUDIOS = 12;
+const MAX_AUDIO_REQUEST_ATTEMPTS = 3;
+const AUDIO_RETRY_DELAY = 500;
 
 type SpeakText = (text: string) => Promise<string>;
 
 const audioCache = new WeakMap<SpeakText, Map<string, Promise<string>>>();
+
+async function requestAudioWithRetry(speakText: SpeakText, text: string, attempt = 1): Promise<string> {
+  try {
+    return await speakText(text);
+  } catch (error) {
+    if (attempt >= MAX_AUDIO_REQUEST_ATTEMPTS) throw error;
+    await new Promise((resolve) => setTimeout(resolve, AUDIO_RETRY_DELAY * attempt));
+    return requestAudioWithRetry(speakText, text, attempt + 1);
+  }
+}
 
 function getCachedAudio(speakText: SpeakText, text: string, cacheScope: string) {
   let cache = audioCache.get(speakText);
@@ -35,7 +47,7 @@ function getCachedAudio(speakText: SpeakText, text: string, cacheScope: string) 
     return existing;
   }
 
-  const audio = speakText(text);
+  const audio = requestAudioWithRetry(speakText, text);
   cache.set(key, audio);
   if (cache.size > MAX_CACHED_AUDIOS) {
     const oldestKey = cache.keys().next().value;
