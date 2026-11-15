@@ -37,18 +37,7 @@
             <BookResultRow
               :row="row"
               :is-starred="favoritesStore.starred({ ...row, ruleId })"
-              @select="
-                const chapterRoute = router.resolve({
-                  path: '/chapter',
-                  query: {
-                    ...row,
-                    ruleId,
-                    name: row.name,
-                    filePath: row.url
-                  }
-                });
-                window.open(chapterRoute.href, '_blank', 'noopener,noreferrer');
-              "
+              @select="openChapter(row)"
               @favorite="favoritesStore.star({ ...row, ruleId })"
             />
           </div>
@@ -112,6 +101,19 @@ const currentCategory = ref<any>();
 let categoryRequest = 0;
 
 const PAGE_PATTERN = /(\$page)|((^|[^a-zA-Z'"_/-])page([^a-zA-Z0-9'"]|$))/;
+
+function openChapter(row: any) {
+  const chapterRoute = router.resolve({
+    path: '/chapter',
+    query: {
+      ...row,
+      ruleId: ruleId.value,
+      name: row.name,
+      filePath: row.url
+    }
+  });
+  window.open(chapterRoute.href, '_blank', 'noopener,noreferrer');
+}
 
 const ruleListDisplay = computed(() => {
   const filterContentType = rulesStore.list.filter((e) => e.enableDiscover && e.contentType === contentType.value);
