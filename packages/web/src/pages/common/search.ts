@@ -124,8 +124,8 @@ export function useSearch() {
   onActivated(init);
   onDeactivated(cancelSearch);
 
-  function getChapter(row: any, rule: any) {
-    router.push({
+  function getChapter(row: any, rule: any, openInNewTab = false) {
+    const chapterRoute = router.resolve({
       path: '/chapter',
       query: {
         ...row,
@@ -133,6 +133,11 @@ export function useSearch() {
         ruleId: rule.id
       }
     });
+    if (openInNewTab) {
+      window.open(chapterRoute.href, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    router.push(chapterRoute);
   }
 
   return {

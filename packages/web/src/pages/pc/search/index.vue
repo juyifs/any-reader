@@ -31,7 +31,7 @@
             :key="idx"
             :row="row"
             :is-starred="favoritesStore.starred({ ...row, ruleId: item.rule.id })"
-            @select="getChapter(row, item.rule)"
+            @select="getChapter(row, item.rule, true)"
             @favorite="favoritesStore.star({ ...row, ruleId: item.rule.id })"
           />
         </div>

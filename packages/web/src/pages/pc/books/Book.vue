@@ -15,7 +15,7 @@ const props = defineProps<{ name: string; cover?: string; author?: string; descr
 const router = useRouter();
 
 function showChapter() {
-  router.push({
+  const chapterRoute = router.resolve({
     path: '/chapter',
     query: {
       filePath: props.filePath,
@@ -26,5 +26,6 @@ function showChapter() {
       description: props.description
     }
   });
+  window.open(chapterRoute.href, '_blank', 'noopener,noreferrer');
 }
 </script>

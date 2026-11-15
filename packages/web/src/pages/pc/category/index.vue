@@ -38,7 +38,7 @@
               :row="row"
               :is-starred="favoritesStore.starred({ ...row, ruleId })"
               @select="
-                router.push({
+                const chapterRoute = router.resolve({
                   path: '/chapter',
                   query: {
                     ...row,
@@ -46,7 +46,8 @@
                     name: row.name,
                     filePath: row.url
                   }
-                })
+                });
+                window.open(chapterRoute.href, '_blank', 'noopener,noreferrer');
               "
               @favorite="favoritesStore.star({ ...row, ruleId })"
             />
