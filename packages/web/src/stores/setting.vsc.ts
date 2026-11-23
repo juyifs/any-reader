@@ -31,9 +31,7 @@ export type KeyboardShortcuts = {
 };
 
 export type TTSSettings = {
-  endpoint: string;
-  token: string;
-  voice: string;
+  url: string;
   volume: number | null;
   rate: number | null;
   pitch: number | null;
@@ -75,9 +73,7 @@ export const useSettingStore = defineStore('setting', () => {
     mangaPageTurnMode: 'scroll',
     contentFilters: [],
     tts: {
-      endpoint: '',
-      token: '',
-      voice: 'zh-CN-XiaoxiaoNeural',
+      url: '',
       volume: null,
       rate: null,
       pitch: null
@@ -91,6 +87,17 @@ export const useSettingStore = defineStore('setting', () => {
     const res = await readConfig().catch(() => {});
     if (res?.code === 0) {
       const config = res.data || {};
+      if (config.tts) {
+        const { endpoint, token, voice, ...tts } = config.tts;
+        let url = tts.url || '';
+        if (!url && endpoint) {
+          const legacyUrl = new URL(endpoint);
+          if (voice) legacyUrl.searchParams.set('voice', voice);
+          if (token) legacyUrl.searchParams.set('token', token);
+          url = legacyUrl.toString();
+        }
+        config.tts = { ...tts, url };
+      }
       const legacyPageTurnMode = config.pageTurnMode;
       merge(data, config);
       if (legacyPageTurnMode === 'scroll' || legacyPageTurnMode === 'tap') {

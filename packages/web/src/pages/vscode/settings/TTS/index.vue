@@ -1,28 +1,11 @@
 <template>
   <div>
-    <SettingRow title="TTS 接口地址">
+    <SettingRow title="开源阅读朗读网址">
       <vscode-text-field
-        :value="settingStore.data.tts.endpoint"
+        :value="settingStore.data.tts.url"
         class="w-full"
-        placeholder="留空使用内置 Edge TTS"
-        @input="(event) => (settingStore.data.tts.endpoint = event.target.value)"
-      />
-    </SettingRow>
-    <SettingRow title="TTS Token">
-      <vscode-text-field
-        :value="settingStore.data.tts.token"
-        class="w-full"
-        type="password"
-        placeholder="可选"
-        @input="(event) => (settingStore.data.tts.token = event.target.value)"
-      />
-    </SettingRow>
-    <SettingRow title="TTS 声音 ID">
-      <vscode-text-field
-        :value="settingStore.data.tts.voice"
-        class="w-full"
-        placeholder="zh-CN-XiaoxiaoNeural"
-        @input="(event) => (settingStore.data.tts.voice = event.target.value)"
+        placeholder="粘贴 ms-ra-forwarder 导入网址"
+        @input="(event) => (settingStore.data.tts.url = event.target.value)"
       />
     </SettingRow>
     <SettingRow title="音量（-100 至 100）">
